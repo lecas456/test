@@ -6,696 +6,946 @@
 <title>Mamíferos — Rede Filogenética</title>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-:root {
-  --bg: #030318;
-  --panel-bg: rgba(8,8,35,0.95);
-  --text: #e0e8ff;
-  --dim: #556080;
-  --cyan: #00d4ff;
-  --border: rgba(0,212,255,0.15);
-}
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'SF Pro Display','Segoe UI',system-ui,sans-serif; }
-
-#stars { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
-#graph { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
-
-.header {
-  position:fixed; top:0; left:0; right:0; z-index:10;
-  padding:18px 20px 40px;
-  background:linear-gradient(to bottom,rgba(3,3,24,0.95) 0%,transparent 100%);
-  pointer-events:none;
-}
-.header h1 { font-size:15px; font-weight:300; letter-spacing:5px; text-transform:uppercase; color:var(--cyan); text-shadow:0 0 24px rgba(0,212,255,0.7); }
-.header p { font-size:10px; letter-spacing:2px; color:var(--dim); margin-top:3px; }
-
-/* ---- LEGEND ---- */
-#legend {
-  position:fixed; top:68px; right:14px; z-index:10;
-  background:rgba(3,3,24,0.75); backdrop-filter:blur(12px);
-  border:1px solid var(--border); border-radius:12px;
-  padding:10px 12px; max-width:140px;
-}
-.leg-title { font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); margin-bottom:7px; }
-.leg-item { display:flex; align-items:center; gap:7px; margin-bottom:5px; cursor:pointer; }
-.leg-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.leg-label { font-size:10px; color:rgba(200,215,240,0.85); }
-
-/* ---- INFO PANEL ---- */
-#panel {
-  position:fixed; bottom:0; left:0; right:0; z-index:20;
-  background:var(--panel-bg); backdrop-filter:blur(24px);
-  border-top:1px solid rgba(0,212,255,0.2);
-  border-radius:20px 20px 0 0;
-  padding:0 20px 30px;
-  transform:translateY(100%);
-  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
-  max-height:60vh; overflow-y:auto;
-}
-#panel.open { transform:translateY(0); }
-.handle { width:38px; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; margin:14px auto 18px; }
-#closebtn {
-  position:absolute; top:14px; right:16px;
-  background:rgba(255,255,255,0.08); border:none; color:#fff;
-  width:28px; height:28px; border-radius:50%; font-size:14px;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-}
-.p-emoji { font-size:52px; text-align:center; margin-bottom:10px; line-height:1; }
-.p-name { font-size:20px; font-weight:600; text-align:center; }
-.p-sci { font-size:12px; font-style:italic; color:var(--dim); text-align:center; margin-top:3px 0 14px; padding:3px 0 14px; }
-.p-badge {
-  display:block; text-align:center; margin-bottom:14px;
-  font-size:10px; letter-spacing:1px; text-transform:uppercase;
-  padding:3px 12px; border-radius:20px; width:fit-content; margin:0 auto 14px;
-}
-.p-desc { font-size:13px; line-height:1.75; color:rgba(210,225,255,0.88); }
-.p-facts { margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.fact {
-  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
-  border-radius:10px; padding:10px 12px;
-}
-.fact-k { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--dim); margin-bottom:3px; }
-.fact-v { font-size:12px; font-weight:500; color:#fff; }
-
-/* ---- RESET BTN ---- */
-#resetbtn {
-  position:fixed; bottom:20px; right:16px; z-index:11;
-  width:44px; height:44px; border-radius:50%;
-  background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.25);
-  color:var(--cyan); font-size:20px; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  backdrop-filter:blur(8px); transition:background 0.2s;
-}
-#resetbtn:hover { background:rgba(0,212,255,0.18); }
-
-/* ---- TOOLTIP ---- */
-#tooltip {
-  position:fixed; z-index:15; pointer-events:none;
-  background:rgba(8,8,35,0.9); border:1px solid var(--border);
-  border-radius:8px; padding:6px 10px;
-  font-size:11px; color:var(--text); letter-spacing:.5px;
-  opacity:0; transition:opacity 0.15s;
-}
+:root{--bg:#030318;--panel-bg:rgba(8,8,35,0.96);--text:#e0e8ff;--dim:#556080;--cyan:#00d4ff;--border:rgba(0,212,255,0.15);}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'SF Pro Display','Segoe UI',system-ui,sans-serif;}
+#stars{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#graph{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
+.header{position:fixed;top:0;left:0;right:0;z-index:10;padding:16px 20px 40px;background:linear-gradient(to bottom,rgba(3,3,24,.96) 0%,transparent 100%);pointer-events:none;}
+.header h1{font-size:14px;font-weight:300;letter-spacing:5px;text-transform:uppercase;color:var(--cyan);text-shadow:0 0 24px rgba(0,212,255,.7);}
+.header p{font-size:9px;letter-spacing:2px;color:var(--dim);margin-top:3px;}
+#legend{position:fixed;top:62px;right:14px;z-index:10;background:rgba(3,3,24,.8);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;padding:8px 11px;max-width:136px;max-height:calc(100vh - 120px);overflow-y:auto;}
+#legend::-webkit-scrollbar{width:3px;}
+#legend::-webkit-scrollbar-thumb{background:rgba(0,212,255,.3);border-radius:2px;}
+.leg-title{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+.leg-item{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.leg-label{font-size:9px;color:rgba(200,215,240,.85);}
+#panel{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--panel-bg);backdrop-filter:blur(24px);border-top:1px solid rgba(0,212,255,.2);border-radius:20px 20px 0 0;padding:0 20px 32px;transform:translateY(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);max-height:62vh;overflow-y:auto;}
+#panel.open{transform:translateY(0);}
+.handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:13px auto 16px;}
+#closebtn{position:absolute;top:13px;right:15px;background:rgba(255,255,255,.08);border:none;color:#fff;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.p-emoji{font-size:50px;text-align:center;margin-bottom:8px;line-height:1;}
+.p-name{font-size:19px;font-weight:600;text-align:center;}
+.p-sci{font-size:11px;font-style:italic;color:var(--dim);text-align:center;padding:3px 0 12px;}
+.p-badge{display:block;text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 12px;border-radius:20px;width:fit-content;margin:0 auto 12px;}
+.p-desc{font-size:13px;line-height:1.75;color:rgba(210,225,255,.88);}
+.p-facts{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.fact{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:9px 11px;}
+.fact-k{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:3px;}
+.fact-v{font-size:11px;font-weight:500;color:#fff;}
+#resetbtn{position:fixed;bottom:18px;right:15px;z-index:11;width:42px;height:42px;border-radius:50%;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:var(--cyan);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:background .2s;}
+#resetbtn:hover{background:rgba(0,212,255,.18);}
+.hint{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:10;font-size:9px;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;pointer-events:none;opacity:1;transition:opacity 1s;}
+.hint.gone{opacity:0;}
 </style>
 </head>
 <body>
-
 <canvas id="stars"></canvas>
 <svg id="graph"></svg>
-
-<div class="header">
-  <h1>Mamíferos</h1>
-  <p>Rede Filogenética Interativa · Toque para explorar</p>
-</div>
-
+<div class="header"><h1>Mamíferos</h1><p>Rede Filogenética · Toque para explorar · Arraste para mover</p></div>
 <div id="legend"></div>
-<div id="tooltip"></div>
-
-<div id="panel">
-  <div class="handle"></div>
-  <button id="closebtn">✕</button>
-  <div id="panelcontent"></div>
-</div>
-
+<div id="panel"><div class="handle"></div><button id="closebtn">✕</button><div id="pc"></div></div>
 <button id="resetbtn" title="Centralizar">⊕</button>
-
+<div class="hint" id="hint">Pinça para zoom</div>
 <script>
-/* ===== STARS ===== */
-(function(){
-  const c = document.getElementById('stars');
-  c.width = window.innerWidth; c.height = window.innerHeight;
-  const x = c.getContext('2d');
-  for(let i=0;i<250;i++){
-    x.beginPath();
-    x.arc(Math.random()*c.width, Math.random()*c.height, Math.random()*1.3, 0, 6.28);
-    x.fillStyle = `rgba(180,200,255,${(Math.random()*0.6+0.2).toFixed(2)})`;
-    x.fill();
-  }
-})();
+// STARS
+(function(){const c=document.getElementById('stars');c.width=window.innerWidth;c.height=window.innerHeight;const x=c.getContext('2d');for(let i=0;i<280;i++){x.beginPath();x.arc(Math.random()*c.width,Math.random()*c.height,Math.random()*1.2,0,6.28);x.fillStyle=`rgba(180,200,255,${(Math.random()*.6+.2).toFixed(2)})`;x.fill();}})();
+setTimeout(()=>document.getElementById('hint').classList.add('gone'),4000);
 
-/* ===== CLADE COLORS ===== */
-const CC = {
-  root:'#FFD700', theria:'#e0a000',
-  monotremata:'#00CED1', marsupialia:'#FF6B35',
-  placentalia:'#a070e0', afrotheria:'#DA70D6',
-  xenarthra:'#00C853', boreoeutheria:'#40C4FF',
-  euarchontoglires:'#00E5FF', primates:'#00BCD4',
-  rodentia:'#FF4081', lagomorpha:'#FFEB3B',
-  laurasiatheria:'#FF6E40', carnivora:'#F44336',
-  cetartiodactyla:'#2196F3', perissodactyla:'#FF9800',
-  chiroptera:'#CE93D8', eulipotyphla:'#8BC34A',
+// COLORS — one per order-level clade
+const CC={
+  root:'#FFD700',theria:'#e0a000',
+  monotremata:'#00CED1',marsupialia:'#FF6B35',
+  placentalia:'#a070e0',afrotheria:'#DA70D6',xenarthra:'#00C853',
+  boreoeutheria:'#40C4FF',euarchontoglires:'#00E5FF',
+  primates:'#00BCD4',rodentia:'#FF4081',lagomorpha:'#FFEB3B',
+  laurasiatheria:'#FF6E40',carnivora:'#F44336',
+  cetartiodactyla:'#2196F3',perissodactyla:'#FF9800',
+  chiroptera:'#CE93D8',eulipotyphla:'#8BC34A',
 };
 
-/* ===== DATA ===== */
-const nodes = [
-  {id:'mammalia',      label:'Mammalia',         type:'root',    clade:'root',
-   emoji:'🌍', scientific:'Mammalia',
-   desc:'Classe dos vertebrados que inclui todos os animais que amamentam filhotes. Surgiram há ~220 Ma a partir de cinodontes. Hoje compreendem mais de 5.500 espécies que colonizaram terra, ar e mar.',
-   facts:{'Espécies':'~5.500','Origem':'~220 Ma','Habitats':'Todos','Nível':'Classe'}},
+// NODES
+const nodes=[
+// ── ROOT ──
+{id:'mammalia',label:'Mammalia',type:'root',clade:'root',emoji:'🌍',scientific:'Mammalia',
+ desc:'Classe dos vertebrados que amamentam filhotes com leite. Surgiram há ~220 Ma de cinodontes terápsidos. Colonizaram todos os habitats: terra, ar e mar, com mais de 5.500 espécies.',
+ facts:{'Espécies':'~5.500','Origem':'~220 Ma','Habitats':'Todos','Nível':'Classe'}},
 
-  {id:'theria',        label:'Theria',            type:'clade',   clade:'theria',
-   emoji:'🧬', scientific:'Theria',
-   desc:'Subclasse dos mamíferos vivíparos. Inclui marsupiais e placentários. Diferem dos monotremados por não botarem ovos e por possuírem estruturas reprodutivas mais derivadas.',
-   facts:{'Espécies':'~5.400','Origem':'~180 Ma','Reprodução':'Vivíparos','Nível':'Subclasse'}},
+// ── SUPERORDERS / SUBCLASSES ──
+{id:'theria',label:'Theria',type:'clade',clade:'theria',emoji:'🧬',scientific:'Theria',
+ desc:'Subclasse dos mamíferos vivíparos — inclui marsupiais e placentários. Não botam ovos; embriões se desenvolvem internamente.',
+ facts:{'Espécies':'~5.400','Origem':'~180 Ma','Reprod.':'Vivíparos','Nível':'Subclasse'}},
+{id:'monotremata',label:'Monotremata',type:'clade',clade:'monotremata',emoji:'🥚',scientific:'Monotremata',
+ desc:'Único grupo de mamíferos ovíparos. Possuem cloaca única e eletrorrecepção para detectar presas. Restritos à Austrália e Nova Guiné.',
+ facts:{'Espécies':'5','Origem':'~166 Ma','Região':'Oceania','Nível':'Ordem'}},
+{id:'marsupialia',label:'Marsupialia',type:'clade',clade:'marsupialia',emoji:'🦘',scientific:'Metatheria',
+ desc:'Mamíferos com marsúpio: filhotes nascem minúsculos (~1 cm) e completam o desenvolvimento na bolsa. Dominam a fauna australiana.',
+ facts:{'Espécies':'~330','Origem':'~80 Ma','Região':'Oceania/Am. Sul','Nível':'Infraclasse'}},
+{id:'placentalia',label:'Placentalia',type:'clade',clade:'placentalia',emoji:'🫀',scientific:'Eutheria',
+ desc:'Mamíferos com placenta desenvolvida, permitindo gestação prolongada. Grupo mais diverso, de musaranhos a baleias-azuis.',
+ facts:{'Espécies':'~5.000','Origem':'~100 Ma','Tipo':'Placentários','Nível':'Infraclasse'}},
+{id:'afrotheria',label:'Afrotheria',type:'clade',clade:'afrotheria',emoji:'🐘',scientific:'Afrotheria',
+ desc:'Superordem de origem africana revelada por DNA nos anos 1990. Une elefantes, sirênios, hiracóides, aardvarks e outros por ancestralidade comum.',
+ facts:{'Espécies':'~100','Origem':'~90 Ma','Região':'África (orig.)','Nível':'Superordem'}},
+{id:'xenarthra',label:'Xenarthra',type:'clade',clade:'xenarthra',emoji:'🦥',scientific:'Xenarthra',
+ desc:'Grupo exclusivo das Américas — tatus, preguiças e tamanduás. Xenartrias são articulações vertebrais extras que reforçam a coluna.',
+ facts:{'Espécies':'~31','Origem':'~60 Ma','Região':'Américas','Nível':'Superordem'}},
+{id:'boreoeutheria',label:'Boreoeutheria',type:'clade',clade:'boreoeutheria',emoji:'🌍',scientific:'Boreoeutheria',
+ desc:'Maior clado de placentários, com origem boreal. Divide-se em Euarchontoglires e Laurasiatheria.',
+ facts:{'Espécies':'~4.800','Origem':'~90 Ma','Divisões':'2','Nível':'Superordem'}},
+{id:'euarchontoglires',label:'Euarchontoglires',type:'clade',clade:'euarchontoglires',emoji:'🧠',scientific:'Euarchontoglires',
+ desc:'Clado que une primatas, roedores, lagomorfos, tupaiídeos e colugos. Inclui os mamíferos mais encefalizados.',
+ facts:{'Espécies':'~2.700','Origem':'~80 Ma','Destaque':'Primatas','Nível':'Grandordem'}},
+{id:'primates',label:'Primates',type:'clade',clade:'primates',emoji:'🐒',scientific:'Primates',
+ desc:'Visão binocular colorida, polegares oponíveis e alto encéfalo. Mais de 500 espécies, da maioria ameaçada pela destruição florestal.',
+ facts:{'Espécies':'~500','Origem':'~65 Ma','Encefaliz.':'Alta','Nível':'Ordem'}},
+{id:'rodentia',label:'Rodentia',type:'clade',clade:'rodentia',emoji:'🐭',scientific:'Rodentia',
+ desc:'Maior ordem de mamíferos: ~40% de todas as espécies. Incisivos crescem continuamente e precisam ser desgastados.',
+ facts:{'Espécies':'~2.200','Origem':'~66 Ma','Diversidade':'Máxima','Nível':'Ordem'}},
+{id:'lagomorpha',label:'Lagomorpha',type:'clade',clade:'lagomorpha',emoji:'🐇',scientific:'Lagomorpha',
+ desc:'Coelhos, lebres e pikas. Distinguem-se dos roedores pelos dois pares de incisivos superiores e pela cecotrofia.',
+ facts:{'Espécies':'~90','Origem':'~60 Ma','Dieta':'Herbívora','Nível':'Ordem'}},
+{id:'laurasiatheria',label:'Laurasiatheria',type:'clade',clade:'laurasiatheria',emoji:'🌋',scientific:'Laurasiatheria',
+ desc:'Origem no supercontinente Laurásia. A maior diversidade morfológica dos mamíferos: morcegos voadores a baleias oceânicas.',
+ facts:{'Espécies':'~2.100','Origem':'~85 Ma','Região':'Laurásia','Nível':'Superordem'}},
+{id:'carnivora',label:'Carnivora',type:'clade',clade:'carnivora',emoji:'🦁',scientific:'Carnivora',
+ desc:'Inclui felinos, canídeos, ursídeos, mustelídeos e pinípedes. Alguns são herbívoros (panda) ou onívoros.',
+ facts:{'Espécies':'~280','Origem':'~60 Ma','Dieta':'Variada','Nível':'Ordem'}},
+{id:'cetartiodactyla',label:'Cetartiodactyla',type:'clade',clade:'cetartiodactyla',emoji:'🐋',scientific:'Cetartiodactyla',
+ desc:'Une cetáceos e artiodáctilos. Hipopótamos são os parentes vivos mais próximos de baleias — revelado por DNA molecular.',
+ facts:{'Espécies':'~350','Origem':'~55 Ma','Habitat':'Terra e Mar','Nível':'Ordem'}},
+{id:'perissodactyla',label:'Perissodactyla',type:'clade',clade:'perissodactyla',emoji:'🐴',scientific:'Perissodactyla',
+ desc:'Ungulados com número ímpar de dedos. Cavalos (1), rinocerontes (3), antas (4/3). Foram muito mais diversificados no Eoceno.',
+ facts:{'Espécies':'17','Origem':'~56 Ma','Dedos':'Ímpar','Nível':'Ordem'}},
+{id:'chiroptera',label:'Chiroptera',type:'clade',clade:'chiroptera',emoji:'🦇',scientific:'Chiroptera',
+ desc:'Únicos mamíferos com voo verdadeiro. ~1.400 espécies com ecolocação ultrassônica. Essenciais para polinização e controle de insetos.',
+ facts:{'Espécies':'~1.400','Origem':'~55 Ma','Voo':'Ativo','Nível':'Ordem'}},
+{id:'eulipotyphla',label:'Eulipotyphla',type:'clade',clade:'eulipotyphla',emoji:'🦔',scientific:'Eulipotyphla',
+ desc:'Ouriços, toupeiras e musaranhos. Musaranhos têm o maior metabolismo de qualquer mamífero — comem quase seu próprio peso por dia.',
+ facts:{'Espécies':'~500','Origem':'~60 Ma','Porte':'Pequeno','Nível':'Ordem'}},
 
-  {id:'monotremata',   label:'Monotremata',       type:'clade',   clade:'monotremata',
-   emoji:'🥚', scientific:'Monotremata',
-   desc:'Único grupo de mamíferos que bota ovos. Restritos à Austrália e Nova Guiné. Possuem características primitivas como cloaca única e eletrorrecepção — detectam campos elétricos para encontrar presas.',
-   facts:{'Espécies':'5','Origem':'~166 Ma','Região':'Oceania','Nível':'Ordem'}},
+// ── FAMILY NODES ──
+// Cetartiodactyla families
+{id:'mysticeti',label:'Mysticeti',type:'family',clade:'cetartiodactyla',emoji:'🐋',scientific:'Mysticeti (Baleias de barbatanas)',
+ desc:'Subordem das baleias filtradoras — usam barbatanas de queratina para filtrar krill e pequenos peixes. Maiores animais já existentes.',
+ facts:{'Espécies':'~15','Habitat':'Oceanos globais','Alim.':'Filtração','Tipo':'Misticetos'}},
+{id:'odontoceti',label:'Odontoceti',type:'family',clade:'cetartiodactyla',emoji:'🐬',scientific:'Odontoceti (Cetáceos com dentes)',
+ desc:'Baleias, golfinhos e toninhas com dentes. Usam ecolocação ativa — emitem cliques e interpretam ecos para navegar e caçar.',
+ facts:{'Espécies':'~70','Habitat':'Oceanos e rios','Ecolocação':'Sim','Tipo':'Odontocetos'}},
+{id:'bovidae_f',label:'Bovidae',type:'family',clade:'cetartiodactyla',emoji:'🐄',scientific:'Bovidae',
+ desc:'Maior família de artiodáctilos — bovinos, ovinos, caprinos, antílopes e GNU. Todos têm chifres permanentes de queratina sobre núcleo ósseo.',
+ facts:{'Espécies':'~140','Origem':'~20 Ma','Chifres':'Permanentes','Habitat':'Savanas, montanhas'}},
+{id:'giraffidae_f',label:'Giraffidae',type:'family',clade:'cetartiodactyla',emoji:'🦒',scientific:'Giraffidae',
+ desc:'Família com apenas 2 gêneros vivos: girafas e okapis. As girafas são os mais altos animais terrestres; os okapis, descobertos em 1901.',
+ facts:{'Espécies':'6','Origem':'~25 Ma','Pescoço':'Longo','Habitat':'África'}},
+{id:'hippopotamidae_f',label:'Hippopotamidae',type:'family',clade:'cetartiodactyla',emoji:'🦛',scientific:'Hippopotamidae',
+ desc:'Família com hipopótamo comum e hipopótamo-pigmeu. Parentes mais próximos das baleias. Semiacuáticos e altamente territoriais.',
+ facts:{'Espécies':'2','Origem':'~55 Ma','Habitat':'Rios africanos','Parente':'Baleias'}},
+{id:'suidae_f',label:'Suidae',type:'family',clade:'cetartiodactyla',emoji:'🐗',scientific:'Suidae',
+ desc:'Família dos porcos e javalis. Onívoros com focinho adaptado para escavar. O javali-europeu é ancestral do porco doméstico.',
+ facts:{'Espécies':'~18','Dieta':'Onívoros','Habitat':'Florestas e savanas','Domesticação':'~9.000 aC'}},
+{id:'camelidae_f',label:'Camelidae',type:'family',clade:'cetartiodactyla',emoji:'🐪',scientific:'Camelidae',
+ desc:'Camelos, lhamas, alpacas, guanacos e vicunhas. Adaptados a ambientes áridos e de altitude. Corcova armazena gordura, não água.',
+ facts:{'Espécies':'7','Origem':'~45 Ma','Orig.':'América do Norte','Habitat':'Desertos e Andes'}},
+{id:'cervidae_f',label:'Cervidae',type:'family',clade:'cetartiodactyla',emoji:'🦌',scientific:'Cervidae',
+ desc:'Veados, alces, renas e caribus. Únicos ungulados com chifres caducos (caem e re-crescem anualmente), geralmente só nos machos.',
+ facts:{'Espécies':'~55','Chifres':'Caducos','Habitat':'Florestas e tundra','Orig.':'Eurasia'}},
 
-  {id:'marsupialia',   label:'Marsupialia',       type:'clade',   clade:'marsupialia',
-   emoji:'🦘', scientific:'Metatheria',
-   desc:'Mamíferos com marsúpio: filhotes nascem imaturos (1-2 cm) e completam o desenvolvimento dentro da bolsa. Dominam a fauna australiana e possuem mais de 300 espécies.',
-   facts:{'Espécies':'~330','Origem':'~80 Ma','Região':'Oceania/Am. Sul','Nível':'Infraclasse'}},
+// Carnivora families
+{id:'felidae_f',label:'Felidae',type:'family',clade:'carnivora',emoji:'🦁',scientific:'Felidae',
+ desc:'Família dos felinos: todos são carnívoros obrigatórios com garras retráteis, visão noturna avançada e presas adaptadas para matar.',
+ facts:{'Espécies':'~37','Dieta':'Carnívora obrig.','Garras':'Retráteis','Orig.':'~11 Ma'}},
+{id:'canidae_f',label:'Canidae',type:'family',clade:'carnivora',emoji:'🐺',scientific:'Canidae',
+ desc:'Lobos, raposas, coiotes, chacais e cães. Tipicamente caçadores de resistência com estruturas sociais complexas.',
+ facts:{'Espécies':'~36','Social':'Alta','Dieta':'Onívoros','Orig.':'~40 Ma'}},
+{id:'ursidae_f',label:'Ursidae',type:'family',clade:'carnivora',emoji:'🐻',scientific:'Ursidae',
+ desc:'Ursos — maiores carnívoros terrestres. Apesar do nome da ordem, ursos-panda e ursos-beiçudo são principalmente herbívoros.',
+ facts:{'Espécies':'8','Dieta':'Variada','Hibernação':'Alguns','Orig.':'~38 Ma'}},
+{id:'mustelidae_f',label:'Mustelidae',type:'family',clade:'carnivora',emoji:'🦦',scientific:'Mustelidae',
+ desc:'Lontras, texugos, doninhas, martas e ariranhas. Maior família de carnívoros em espécies. Mustelídeos são ágeis predadores.',
+ facts:{'Espécies':'~56','Dieta':'Carnívora','Habitat':'Variado','Orig.':'~40 Ma'}},
+{id:'pinnipedia_f',label:'Pinnipedia',type:'family',clade:'carnivora',emoji:'🦭',scientific:'Pinnipedia',
+ desc:'Focas, leões-marinhos e morsas. Carnívoros secundariamente adaptados à vida aquática, com membros transformados em nadadeiras.',
+ facts:{'Espécies':'~33','Habitat':'Oceanos polares','Orig.':'~27 Ma','Mergulho':'Profundo'}},
 
-  {id:'placentalia',   label:'Placentalia',       type:'clade',   clade:'placentalia',
-   emoji:'🫀', scientific:'Eutheria',
-   desc:'Mamíferos com placenta desenvolvida, permitindo gestação longa e filhotes mais maduros ao nascer. O grupo mais diverso dos mamíferos, incluindo desde musaranhos a baleias-azuis.',
-   facts:{'Espécies':'~5.000','Origem':'~100 Ma','Tipo':'Placentários','Nível':'Infraclasse'}},
+// Primates families
+{id:'hominidae_f',label:'Hominidae',type:'family',clade:'primates',emoji:'🦍',scientific:'Hominidae (Grandes Símios)',
+ desc:'Humanos, chimpanzés, gorilas e orangotangos. Sem cauda, com grande encéfalo e uso de ferramentas complexas.',
+ facts:{'Espécies':'7','Orig.':'~15 Ma','Encéfalo':'Maior','DNA humano':'98,7%'}},
+{id:'cercopithecidae_f',label:'Cercopithecidae',type:'family',clade:'primates',emoji:'🐒',scientific:'Cercopithecidae',
+ desc:'Macacos do Velho Mundo — babuínos, macacos-rhesus, mandrins e colobos. Sem cauda preênsil; narinas próximas.',
+ facts:{'Espécies':'~138','Habitat':'África e Ásia','Cauda':'Não preênsil','Orig.':'~25 Ma'}},
+{id:'platyrrhini_f',label:'Platyrrhini',type:'family',clade:'primates',emoji:'🐒',scientific:'Platyrrhini (Macacos do Novo Mundo)',
+ desc:'Macacos das Américas — macacos-aranha, bugios, saguis e micos. Muitos têm cauda preênsil para agarrar galhos.',
+ facts:{'Espécies':'~160','Habitat':'América tropical','Cauda':'Preênsil (alguns)','Orig.':'~35 Ma'}},
+{id:'strepsirrhini_f',label:'Strepsirrhini',type:'family',clade:'primates',emoji:'🦊',scientific:'Strepsirrhini (Prossímios)',
+ desc:'Lêmures, lorises e gálagos. Considerados mais primitivos entre os primatas. Rhinarium úmido (focinho de cão).',
+ facts:{'Espécies':'~90','Habitat':'Madagascar e Ásia','Ativo':'Noturno','Orig.':'~55 Ma'}},
 
-  {id:'afrotheria',    label:'Afrotheria',        type:'clade',   clade:'afrotheria',
-   emoji:'🐘', scientific:'Afrotheria',
-   desc:'Superordem de origem africana descoberta por análises moleculares nos anos 1990. Agrupa elefantes, sirênios, hiracóideos, aardvarks e outros — unidos por ancestralidade comum, não por aparência.',
-   facts:{'Espécies':'~100','Origem':'~90 Ma','Região':'África (orig.)','Nível':'Superordem'}},
+// Rodentia families
+{id:'muridae_f',label:'Muridae',type:'family',clade:'rodentia',emoji:'🐭',scientific:'Muridae',
+ desc:'Maior família de mamíferos — ratos, camundongos e afins. Extraordinária capacidade adaptativa e reprodutiva.',
+ facts:{'Espécies':'~700','Orig.':'~16 Ma','Repr.':'Explosiva','Habitat':'Global'}},
+{id:'caviidae_f',label:'Caviidae',type:'family',clade:'rodentia',emoji:'🐾',scientific:'Caviidae',
+ desc:'Capivaras, cobaias, mocós e cutias. Roedores de grande porte típicos da América do Sul.',
+ facts:{'Espécies':'~18','Região':'América do Sul','Maior':'Capivara','Orig.':'~10 Ma'}},
+{id:'sciuridae_f',label:'Sciuridae',type:'family',clade:'rodentia',emoji:'🐿️',scientific:'Sciuridae',
+ desc:'Esquilos, marmotas, tâmaras e esquilos-voadores. Adaptados desde florestas tropicais a tundra ártica.',
+ facts:{'Espécies':'~285','Habitat':'Global','Voo':'Planadores','Orig.':'~36 Ma'}},
+{id:'castoridae_f',label:'Castoridae',type:'family',clade:'rodentia',emoji:'🦫',scientific:'Castoridae',
+ desc:'Castores — engenheiros do ecossistema que constroem represas alterando cursos de rios e criando wetlands.',
+ facts:{'Espécies':'2','Habitat':'Rios do Hemisfério N','Represas':'Constroem','Orig.':'~24 Ma'}},
+{id:'hystricidae_f',label:'Hystricidae',type:'family',clade:'rodentia',emoji:'🦔',scientific:'Hystricidae',
+ desc:'Porcos-espinhos do Velho Mundo. Os maiores roedores da Europa e Ásia, com espinhos ocos como defesa.',
+ facts:{'Espécies':'11','Espinhos':'Até 35 cm','Habitat':'Europa, Ásia, África','Orig.':'~10 Ma'}},
 
-  {id:'xenarthra',     label:'Xenarthra',         type:'clade',   clade:'xenarthra',
-   emoji:'🦥', scientific:'Xenarthra',
-   desc:'Grupo exclusivo das Américas que inclui tatus, preguiças e tamanduás. O nome refere-se às articulações vertebrais extras (xenartrias) que reforçam a coluna para escavar e pendurar.',
-   facts:{'Espécies':'~31','Origem':'~60 Ma','Região':'Américas','Nível':'Superordem'}},
+// Marsupialia families
+{id:'macropodidae_f',label:'Macropodidae',type:'family',clade:'marsupialia',emoji:'🦘',scientific:'Macropodidae',
+ desc:'Cangurus, wallabies e quokkas. Patas traseiras enormes para saltar; marsúpio orientado para frente.',
+ facts:{'Espécies':'~65','Locomoção':'Salto','Habitat':'Austrália','Orig.':'~15 Ma'}},
+{id:'dasyuridae_f',label:'Dasyuridae',type:'family',clade:'marsupialia',emoji:'😈',scientific:'Dasyuridae',
+ desc:'Marsupiais carnívoros australianos — diabo-da-Tasmânia, quolls e dunnarts. A maioria é predador noturno.',
+ facts:{'Espécies':'~75','Dieta':'Carnívora','Habitat':'Austrália e Tasmânia','Orig.':'~15 Ma'}},
 
-  {id:'boreoeutheria',  label:'Boreoeutheria',    type:'clade',   clade:'boreoeutheria',
-   emoji:'🌍', scientific:'Boreoeutheria',
-   desc:'Maior clado de placentários, originou-se no hemisfério norte (Boreália). Divide-se em Euarchontoglires (primatas, roedores) e Laurasiatheria (carnívoros, cetáceos, morcegos e outros).',
-   facts:{'Espécies':'~4.800','Origem':'~90 Ma','Região':'Hemisfério N (orig.)','Nível':'Superordem'}},
+// Perissodactyla families
+{id:'equidae_f',label:'Equidae',type:'family',clade:'perissodactyla',emoji:'🐴',scientific:'Equidae',
+ desc:'Cavalos, zebras, asnos e onagros. Um único dedo funcional (o terceiro), andando na ponta.',
+ facts:{'Espécies':'7','Dedos':'1','Vel. máx':'70 km/h','Orig.':'~4 Ma'}},
+{id:'rhinocerotidae_f',label:'Rhinocerotidae',type:'family',clade:'perissodactyla',emoji:'🦏',scientific:'Rhinocerotidae',
+ desc:'Rinocerontes — três espécies na Ásia, duas na África. "Chifre" de queratina. Cinco espécies, das mais ameaçadas do mundo.',
+ facts:{'Espécies':'5','Chifre':'Queratina','Ameaça':'Alta','Orig.':'~50 Ma'}},
+{id:'tapiridae_f',label:'Tapiridae',type:'family',clade:'perissodactyla',emoji:'🐾',scientific:'Tapiridae',
+ desc:'Antas — parentes mais próximos dos cavalos e rinocerontes. Herbívoros semi-aquáticos com focinho preênsil (probóscide curta).',
+ facts:{'Espécies':'5','Habitat':'Florestas tropicais','Focinho':'Preênsil','Orig.':'~35 Ma'}},
 
-  {id:'euarchontoglires', label:'Euarchontoglires', type:'clade', clade:'euarchontoglires',
-   emoji:'🧠', scientific:'Euarchontoglires',
-   desc:'Clado que une primatas, roedores, lagomorfos e afins. Inclui os mamíferos mais encefalizados do planeta e também os mais numerosos em espécies (roedores).',
-   facts:{'Espécies':'~2.700','Origem':'~80 Ma','Destaque':'Primatas, Roedores','Nível':'Grandordem'}},
+// Chiroptera families
+{id:'pteropodidae_f',label:'Pteropodidae',type:'family',clade:'chiroptera',emoji:'🦇',scientific:'Pteropodidae (Morcegos-da-fruta)',
+ desc:'Morcegos frugívoros e nectarívoros. Não usam ecolocação — navegam pela visão e olfato. Incluem os maiores morcegos do mundo.',
+ facts:{'Espécies':'~186','Habitat':'Trópicos do Velho Mundo','Ecolocação':'Não','Orig.':'~35 Ma'}},
+{id:'phyllostomidae_f',label:'Phyllostomidae',type:'family',clade:'chiroptera',emoji:'🧛',scientific:'Phyllostomidae',
+ desc:'Morcegos neotropicais — inclui o único vampiro verdadeiro. Folha nasal característica ajuda na ecolocação.',
+ facts:{'Espécies':'~216','Região':'Américas','Dieta':'Variada','Orig.':'~40 Ma'}},
+{id:'vespertilionidae_f',label:'Vespertilionidae',type:'family',clade:'chiroptera',emoji:'🦇',scientific:'Vespertilionidae',
+ desc:'Maior família de morcegos — morcegos-comuns, pipistrellos. Insetívoros noturnos com ecolocação altamente desenvolvida.',
+ facts:{'Espécies':'~500','Habitat':'Global','Ecolocação':'Alta','Orig.':'~50 Ma'}},
 
-  {id:'primates',      label:'Primates',          type:'clade',   clade:'primates',
-   emoji:'🐒', scientific:'Primates',
-   desc:'Ordem caracterizada por visão binocular colorida, polegares oponíveis, unhas (em vez de garras) e alto desenvolvimento cerebral. Inclui mais de 500 espécies, da maioria ameaçada.',
-   facts:{'Espécies':'~500','Origem':'~65 Ma','Encefalização':'Alta','Nível':'Ordem'}},
+// Eulipotyphla families
+{id:'erinaceidae_f',label:'Erinaceidae',type:'family',clade:'eulipotyphla',emoji:'🦔',scientific:'Erinaceidae',
+ desc:'Ouriços e moonrats. Os ouriços têm ~5.000 espinhos de queratina e imunidade parcial a venenos.',
+ facts:{'Espécies':'~24','Espinhos':'~5.000','Habitat':'Europa, Ásia, África','Orig.':'~50 Ma'}},
+{id:'talpidae_f',label:'Talpidae',type:'family',clade:'eulipotyphla',emoji:'⛏️',scientific:'Talpidae',
+ desc:'Toupeiras e musaranhos-água. Patas dianteiras em forma de pá para escavar. Sangue especial tolera alto CO₂.',
+ facts:{'Espécies':'~42','Habitat':'Subterrâneo','Olhos':'Vestigiais','Orig.':'~35 Ma'}},
+{id:'soricidae_f',label:'Soricidae',type:'family',clade:'eulipotyphla',emoji:'🐀',scientific:'Soricidae',
+ desc:'Musaranhos — os menores mamíferos. Metabolismo extremo: coração bate até 1.200 vezes/min. Alguns são venenosos.',
+ facts:{'Espécies':'~376','Peso':'~2 g','Batimento':'1.200/min','Orig.':'~35 Ma'}},
 
-  {id:'rodentia',      label:'Rodentia',          type:'clade',   clade:'rodentia',
-   emoji:'🐭', scientific:'Rodentia',
-   desc:'Maior ordem de mamíferos com ~40% das espécies. Todos possuem incisivos que crescem continuamente e precisam ser desgastados roendo. Colonizaram praticamente todos os ecossistemas terrestres.',
-   facts:{'Espécies':'~2.200','Origem':'~66 Ma','Diversidade':'Máxima','Nível':'Ordem'}},
+// Afrotheria families
+{id:'proboscidea_f',label:'Proboscidea',type:'family',clade:'afrotheria',emoji:'🐘',scientific:'Proboscidea',
+ desc:'Elefantes — os maiores animais terrestres vivos. Tromba com ~100.000 músculos. Alta inteligência e memória extraordinária.',
+ facts:{'Espécies':'3','Orig.':'~55 Ma','Peso':'até 6.000 kg','Social':'Matriarcal'}},
+{id:'sirenia_f',label:'Sirenia',type:'family',clade:'afrotheria',emoji:'🌊',scientific:'Sirenia',
+ desc:'Peixes-boi e dugongos — únicos mamíferos herbívoros aquáticos. Evoluíram de ancestrais terrestres há ~50 Ma.',
+ facts:{'Espécies':'4','Orig.':'~50 Ma','Dieta':'Herbívora aquática','Ameaça':'Alta'}},
 
-  {id:'lagomorpha',    label:'Lagomorpha',        type:'clade',   clade:'lagomorpha',
-   emoji:'🐇', scientific:'Lagomorpha',
-   desc:'Inclui coelhos, lebres e pikas. Diferenciam-se dos roedores por ter dois pares de incisivos superiores (não um) e por praticarem cecotrofia — ingerem suas próprias fezes para reabsorver nutrientes.',
-   facts:{'Espécies':'~90','Origem':'~60 Ma','Dieta':'Herbívora','Nível':'Ordem'}},
+// Xenarthra families
+{id:'dasypodidae_f',label:'Dasypodidae',type:'family',clade:'xenarthra',emoji:'🛡️',scientific:'Dasypodidae',
+ desc:'Tatus — couraça de osteodermos. Única família com locomoção bípede ocasional e temperatura corporal variável.',
+ facts:{'Espécies':'~21','Couraça':'Osteodermos','Orig.':'~55 Ma','Habitat':'Américas'}},
+{id:'bradypodidae_f',label:'Bradypodidae',type:'family',clade:'xenarthra',emoji:'🦥',scientific:'Bradypodidae',
+ desc:'Preguiças-de-três-dedos — metabolismo mais lento entre mamíferos. Algas crescem no pelo fornecendo camuflagem.',
+ facts:{'Espécies':'4','Vel.':'0,24 km/h','Sono':'20 h/dia','Habitat':'Amazônia'}},
+{id:'myrmecophagidae_f',label:'Myrmecophagidae',type:'family',clade:'xenarthra',emoji:'🐜',scientific:'Myrmecophagidae',
+ desc:'Tamanduás — sem dentes, língua até 60 cm, come até 35.000 insetos/dia. Garra dianteira poderosa para escavar.',
+ facts:{'Espécies':'3','Língua':'60 cm','Dentes':'Nenhum','Habitat':'Am. Central e Sul'}},
 
-  {id:'laurasiatheria', label:'Laurasiatheria',   type:'clade',   clade:'laurasiatheria',
-   emoji:'🌋', scientific:'Laurasiatheria',
-   desc:'Clado originado no supercontinente Laurásia. Inclui a diversidade morfológica mais extrema dos mamíferos: do morcego (voador) à baleia (aquático), passando por carnívoros, ungulados e insetos.',
-   facts:{'Espécies':'~2.100','Origem':'~85 Ma','Região':'Laurásia (orig.)','Nível':'Superordem'}},
+// Lagomorpha families
+{id:'leporidae_f',label:'Leporidae',type:'family',clade:'lagomorpha',emoji:'🐇',scientific:'Leporidae',
+ desc:'Coelhos e lebres. Praticam cecotrofia — ingerem fezes cecais para reabsorver nutrientes. Visão quase 360°.',
+ facts:{'Espécies':'~63','Cecotrofia':'Sim','Visão':'360°','Orig.':'~34 Ma'}},
 
-  {id:'carnivora',     label:'Carnivora',         type:'clade',   clade:'carnivora',
-   emoji:'🦁', scientific:'Carnivora',
-   desc:'Inclui felinos, canídeos, ursídeos, mustelídeos e pinípedes. O nome refere-se à origem, não à dieta atual — pandas, lontras e meerkat são onívoros ou quase herbívoros.',
-   facts:{'Espécies':'~280','Origem':'~60 Ma','Dieta':'Variada','Nível':'Ordem'}},
+// ─────────────────────────────────────
+// SPECIES
+// ─────────────────────────────────────
+// Monotremata
+{id:'platypus',label:'Ornitorrinco',type:'species',clade:'monotremata',emoji:'🦆',scientific:'Ornithorhynchus anatinus',
+ desc:'Mamífero ovíparo com bico de pato, rabo de castor e veneno. Detecta presas por eletrorrecepção — um dos poucos vertebrados com esse sentido. Machos possuem esporão venenoso.',
+ facts:{'Peso':'0,7–2,4 kg','Longevidade':'~17 anos','Habitat':'Rios da Austrália','Status':'Quase Ameaçado'}},
+{id:'echidna',label:'Equidna-de-bico-curto',type:'species',clade:'monotremata',emoji:'🦔',scientific:'Tachyglossus aculeatus',
+ desc:'Coberto de espinhos de queratina. Possui o neocórtex proporcionalmente maior entre mamíferos. Come formigas e cupins. Pode hibernar por meses.',
+ facts:{'Peso':'2–5 kg','Longevidade':'~45 anos','Habitat':'Austrália e Nova Guiné','Status':'Pouco Preocupante'}},
+{id:'longbeak_echidna',label:'Equidna-de-bico-longo',type:'species',clade:'monotremata',emoji:'🦔',scientific:'Zaglossus bruijni',
+ desc:'Maior e mais raro dos monotremados. Bico curvado para baixo usado para extrair minhocas do solo. Criticamente ameaçado pela caça e destruição de habitat.',
+ facts:{'Peso':'5–10 kg','Longevidade':'~30 anos','Habitat':'Nova Guiné','Status':'Criticamente Ameaçado'}},
 
-  {id:'cetartiodactyla', label:'Cetartiodactyla', type:'clade',   clade:'cetartiodactyla',
-   emoji:'🐋', scientific:'Cetartiodactyla',
-   desc:'Clado que une cetáceos (baleias, golfinhos) com artiodáctilos (porcos, girafas, vacas). DNA molecular revelou que hipopótamos são os parentes vivos mais próximos das baleias.',
-   facts:{'Espécies':'~350','Origem':'~55 Ma','Habitat':'Terra e Mar','Nível':'Ordem'}},
+// Macropodidae
+{id:'kangaroo',label:'Canguru-vermelho',type:'species',clade:'marsupialia',emoji:'🦘',scientific:'Macropus rufus',
+ desc:'Maior marsupial vivo. Salta a 70 km/h, com até 9 m por salto. Filhotes nascem com 2,5 cm e completam o desenvolvimento no marsúpio por ~8 meses.',
+ facts:{'Peso':'25–90 kg','Longevidade':'~22 anos','Habitat':'Austrália','Status':'Pouco Preocupante'}},
+{id:'wallaby',label:'Wallaby-das-rochas',type:'species',clade:'marsupialia',emoji:'🦘',scientific:'Petrogale lateralis',
+ desc:'Menor que o canguru, vive em terrenos rochosos. Patas com solas ásperas para aderir a pedras. Altamente ágil em terreno acidentado.',
+ facts:{'Peso':'3–9 kg','Longevidade':'~12 anos','Habitat':'Austrália árida','Status':'Vulnerável'}},
+{id:'quokka',label:'Quokka',type:'species',clade:'marsupialia',emoji:'🦘',scientific:'Setonix brachyurus',
+ desc:'Chamado de "o animal mais feliz do mundo" pela expressão facial natural. Herbívoro social e confiante com humanos na Ilha Rottnest.',
+ facts:{'Peso':'2,5–5 kg','Longevidade':'~10 anos','Habitat':'Sudoeste da Austrália','Status':'Vulnerável'}},
 
-  {id:'perissodactyla', label:'Perissodactyla',   type:'clade',   clade:'perissodactyla',
-   emoji:'🐴', scientific:'Perissodactyla',
-   desc:'Ungulados com número ímpar de dedos funcionais. Inclui cavalos (1 dedo), antas (4 e 3 dedos) e rinocerontes (3 dedos). Foram mais diversos no Eoceno; hoje apenas 17 espécies sobrevivem.',
-   facts:{'Espécies':'17','Origem':'~56 Ma','Dedos':'Ímpar','Nível':'Ordem'}},
+// Dasyuridae
+{id:'tasmanian_devil',label:'Diabo-da-Tasmânia',type:'species',clade:'marsupialia',emoji:'😈',scientific:'Sarcophilus harrisii',
+ desc:'Mordida mais forte proporcionalmente entre mamíferos. Ameaçado pelo tumor facial contagioso DFTD. Projeto de reintrodução ao continente australiano está em andamento.',
+ facts:{'Peso':'6–14 kg','Longevidade':'~6 anos','Habitat':'Tasmânia','Status':'Ameaçado'}},
+{id:'quoll',label:'Quoll-oriental',type:'species',clade:'marsupialia',emoji:'🐱',scientific:'Dasyurus viverrinus',
+ desc:'Marsupial carnívoro com pintas brancas. Predador noturno de répteis, insetos e pequenos vertebrados. Ameaçado por raposas e gatos ferais introduzidos.',
+ facts:{'Peso':'0,9–2 kg','Longevidade':'~5 anos','Habitat':'Austrália SE e Tasmânia','Status':'Em Perigo'}},
 
-  {id:'chiroptera',    label:'Chiroptera',        type:'clade',   clade:'chiroptera',
-   emoji:'🦇', scientific:'Chiroptera',
-   desc:'Únicos mamíferos com voo verdadeiro. Segunda maior ordem em espécies (~1.400). A maioria usa ecolocação ultrassônica para navegar e caçar no escuro. Essenciais como polinizadores e controladores de insetos.',
-   facts:{'Espécies':'~1.400','Origem':'~55 Ma','Habilidade':'Ecolocação','Nível':'Ordem'}},
+// Marsupialia direct
+{id:'koala',label:'Coala',type:'species',clade:'marsupialia',emoji:'🐨',scientific:'Phascolarctos cinereus',
+ desc:'Dorme até 22 horas/dia — eucalipto é pobre em nutrientes e levemente tóxico. Impressões digitais quase idênticas às humanas. Filhotes comem fezes da mãe para adquirir bactérias digestivas.',
+ facts:{'Peso':'4–15 kg','Longevidade':'~18 anos','Habitat':'Austrália SE','Status':'Vulnerável'}},
+{id:'opossum',label:'Gambá-da-virgínia',type:'species',clade:'marsupialia',emoji:'🐀',scientific:'Didelphis virginiana',
+ desc:'Único marsupial nativo da América do Norte. Imunidade natural ao veneno de cobras. Finge-se de morto como defesa ("playing possum"). 50 dentes — mais que qualquer mamífero da América do Norte.',
+ facts:{'Peso':'1,5–5,5 kg','Longevidade':'~4 anos','Habitat':'América do Norte','Status':'Pouco Preocupante'}},
 
-  {id:'eulipotyphla',  label:'Eulipotyphla',      type:'clade',   clade:'eulipotyphla',
-   emoji:'🦔', scientific:'Eulipotyphla',
-   desc:'Inclui ouriços, toupeiras e musaranhos. Frequentemente considerados de morfologia primitiva. Musaranhos têm o maior metabolismo de qualquer mamífero — comem quase o próprio peso por dia.',
-   facts:{'Espécies':'~500','Origem':'~60 Ma','Porte':'Pequeno','Nível':'Ordem'}},
+// Proboscidea
+{id:'elephant',label:'Elefante-africano-savana',type:'species',clade:'afrotheria',emoji:'🐘',scientific:'Loxodonta africana',
+ desc:'Maior animal terrestre. Tromba com ~100.000 músculos. Passa no teste do espelho, usa ferramentas, pratica luto e lembra rotas de centenas de km por décadas.',
+ facts:{'Peso':'3.500–6.000 kg','Longevidade':'~70 anos','Habitat':'África sub-saariana','Status':'Vulnerável'}},
+{id:'forest_elephant',label:'Elefante-da-floresta',type:'species',clade:'afrotheria',emoji:'🐘',scientific:'Loxodonta cyclotis',
+ desc:'Espécie separada do elefante-da-savana reconhecida em 2010. Menor, com orelhas mais redondas e presas mais retas. Vive nas florestas do Congo — essencial como "jardineiro-florestal" dispersando sementes.',
+ facts:{'Peso':'1.800–3.000 kg','Longevidade':'~60 anos','Habitat':'Florestas do Congo','Status':'Criticamente Ameaçado'}},
+{id:'asian_elephant',label:'Elefante-asiático',type:'species',clade:'afrotheria',emoji:'🐘',scientific:'Elephas maximus',
+ desc:'Menor que o africano e com orelhas menores. A única espécie do gênero Elephas ainda viva — parente dos mamutes lanosos. Domesticado há 4.000 anos.',
+ facts:{'Peso':'2.700–5.000 kg','Longevidade':'~60 anos','Habitat':'Ásia sul e sudeste','Status':'Ameaçado'}},
 
-  /* ===== SPECIES ===== */
-  {id:'platypus', label:'Ornitorrinco', type:'species', clade:'monotremata',
-   emoji:'🦆', scientific:'Ornithorhynchus anatinus',
-   desc:'Um dos animais mais únicos da Terra: mamífero que bota ovos, possui bico de pato, rabo de castor e veneno. Detecta presas por eletrorrecepção — um dos poucos vertebrados com esse sentido.',
-   facts:{'Peso':'0,7–2,4 kg','Longevidade':'~17 anos','Habitat':'Rios da Austrália','Status':'Quase Ameaçado'}},
+// Sirenia
+{id:'manatee',label:'Peixe-boi-das-antilhas',type:'species',clade:'afrotheria',emoji:'🌊',scientific:'Trichechus manatus',
+ desc:'Parente dos elefantes. Renova molares de trás para frente ao longo da vida. Pode ficar até 20 min submerso. Inspirou lendas de sereias.',
+ facts:{'Peso':'400–600 kg','Longevidade':'~60 anos','Habitat':'Costas tropicais','Status':'Vulnerável'}},
+{id:'dugong',label:'Dugongo',type:'species',clade:'afrotheria',emoji:'🌊',scientific:'Dugong dugon',
+ desc:'Único sirênio exclusivamente marinho. Rabo em formato de lua crescente (ao contrário da nadadeira caudal arredondada do peixe-boi). Se alimenta de gramas marinhas.',
+ facts:{'Peso':'230–420 kg','Longevidade':'~70 anos','Habitat':'Oceano Índico e Pacífico','Status':'Vulnerável'}},
+{id:'amazonian_manatee',label:'Peixe-boi-da-Amazônia',type:'species',clade:'afrotheria',emoji:'🌊',scientific:'Trichechus inunguis',
+ desc:'Única espécie de sirênio exclusivamente de água doce. Vive nos rios da Amazônia. Menor dos sirênios — pele lisa sem pelos visíveis e sem unhas nas nadadeiras.',
+ facts:{'Peso':'100–480 kg','Longevidade':'~40 anos','Habitat':'Rios amazônicos','Status':'Vulnerável'}},
 
-  {id:'echidna', label:'Equidna', type:'species', clade:'monotremata',
-   emoji:'🦔', scientific:'Tachyglossus aculeatus',
-   desc:'Coberto de espinhos de queratina. Possui o cérebro proporcionalmente maior entre os mamíferos em relação ao corpo. Come formigas e cupins com língua comprida e pegajosa. Pode hibernar por meses.',
-   facts:{'Peso':'2–5 kg','Longevidade':'~45 anos','Habitat':'Austrália','Status':'Pouco Preocupante'}},
+// Afrotheria direct
+{id:'aardvark',label:'Aardvark',type:'species',clade:'afrotheria',emoji:'🐾',scientific:'Orycteropus afer',
+ desc:'Único membro da ordem Tubulidentata. Escava tocas que são usadas por dezenas de outras espécies. Come até 50.000 insetos por noite.',
+ facts:{'Peso':'40–65 kg','Longevidade':'~23 anos','Habitat':'África','Status':'Pouco Preocupante'}},
+{id:'hyrax',label:'Hirax-do-cabo',type:'species',clade:'afrotheria',emoji:'🐾',scientific:'Procavia capensis',
+ desc:'Parece um roedor mas seu parente mais próximo é o elefante! Suas solas dos pés têm propriedades adesivas para escalar rochas. Dentes caninos superiores são presas diminutas.',
+ facts:{'Peso':'2–5,5 kg','Longevidade':'~12 anos','Habitat':'Rochas da África e Oriente Médio','Status':'Pouco Preocupante'}},
 
-  {id:'kangaroo', label:'Canguru-vermelho', type:'species', clade:'marsupialia',
-   emoji:'🦘', scientific:'Macropus rufus',
-   desc:'Maior marsupial vivo. Salta a 70 km/h, com até 9 m por salto. Filhotes nascem com 2,5 cm e ficam ~8 meses no marsúpio. Usa a cauda como "terceira perna" ao descansar.',
-   facts:{'Peso':'25–90 kg','Longevidade':'~22 anos','Habitat':'Austrália','Status':'Pouco Preocupante'}},
+// Dasypodidae
+{id:'armadillo',label:'Tatu-gigante',type:'species',clade:'xenarthra',emoji:'🛡️',scientific:'Priodontes maximus',
+ desc:'Maior tatu vivo. Garras dianteiras mais longas entre mamíferos proporcionalmente. Suas tocas enormes abrigam dezenas de outras espécies.',
+ facts:{'Peso':'18–32 kg','Longevidade':'~12 anos','Habitat':'Am. do Sul','Status':'Vulnerável'}},
+{id:'nine_banded',label:'Tatu-de-nove-bandas',type:'species',clade:'xenarthra',emoji:'🛡️',scientific:'Dasypus novemcinctus',
+ desc:'Única espécie que gera quádruplos idênticos a cada gestação — útil para pesquisa de lepra pois é o único hospedeiro além dos humanos. Pode andar no fundo de rios.',
+ facts:{'Peso':'2,5–6,5 kg','Longevidade':'~15 anos','Habitat':'América do Norte e Sul','Status':'Pouco Preocupante'}},
 
-  {id:'koala', label:'Coala', type:'species', clade:'marsupialia',
-   emoji:'🐨', scientific:'Phascolarctos cinereus',
-   desc:'Dorme até 22 horas/dia para economizar energia — eucalipto é pobre em nutrientes e levemente tóxico. Possui impressões digitais quase idênticas às humanas. Filhotes comem fezes da mãe para adquirir bactérias digestivas.',
-   facts:{'Peso':'4–15 kg','Longevidade':'~18 anos','Habitat':'Austrália SE','Status':'Vulnerável'}},
+// Bradypodidae
+{id:'sloth',label:'Preguiça-de-três-dedos',type:'species',clade:'xenarthra',emoji:'🦥',scientific:'Bradypus tridactylus',
+ desc:'Mamífero mais lento do mundo — 0,24 km/h. Desce das árvores só uma vez por semana. Algas crescem no pelo fornecendo camuflagem verde e nutrientes.',
+ facts:{'Peso':'3–4,5 kg','Longevidade':'~20 anos','Habitat':'Amazônia','Status':'Pouco Preocupante'}},
+{id:'two_toed_sloth',label:'Preguiça-de-dois-dedos',type:'species',clade:'xenarthra',emoji:'🦥',scientific:'Choloepus didactylus',
+ desc:'Genus separado da preguiça-de-três-dedos — convergência evolutiva. Ligeiramente mais rápida e com dieta mais variada. Possui caninos grandes.',
+ facts:{'Peso':'4–8 kg','Longevidade':'~20 anos','Habitat':'Amazônia e Am. Central','Status':'Pouco Preocupante'}},
 
-  {id:'tasmanian_devil', label:'Diabo-da-Tasmânia', type:'species', clade:'marsupialia',
-   emoji:'😈', scientific:'Sarcophilus harrisii',
-   desc:'Mordida mais forte proporcionalmente entre mamíferos. Ameaçado pelo Tumor Facial do Diabo da Tasmânia (DFTD), câncer contagioso raro. Projeto de reintrodução no continente australiano está em andamento.',
-   facts:{'Peso':'6–14 kg','Longevidade':'~6 anos','Habitat':'Tasmânia','Status':'Ameaçado'}},
+// Myrmecophagidae
+{id:'anteater',label:'Tamanduá-bandeira',type:'species',clade:'xenarthra',emoji:'🐜',scientific:'Myrmecophaga tridactyla',
+ desc:'Come até 35.000 insetos/dia. Sem dentes — estômago musculoso com areia tritura o alimento. Língua de 60 cm entra e sai 150 vezes/minuto.',
+ facts:{'Peso':'25–40 kg','Longevidade':'~16 anos','Habitat':'Am. Central e Sul','Status':'Vulnerável'}},
+{id:'tamandua',label:'Tamanduá-mirim',type:'species',clade:'xenarthra',emoji:'🐜',scientific:'Tamandua tetradactyla',
+ desc:'Tamanduá semi-arborícola com cauda preênsil. Produz odor forte como defesa — cinco vezes mais intenso que o gambá. Busca formigas em árvores e no solo.',
+ facts:{'Peso':'3,5–8,5 kg','Longevidade':'~12 anos','Habitat':'Am. do Sul','Status':'Pouco Preocupante'}},
 
-  {id:'elephant', label:'Elefante-africano', type:'species', clade:'afrotheria',
-   emoji:'🐘', scientific:'Loxodonta africana',
-   desc:'Maior animal terrestre. Tromba com ~100.000 músculos. Alta inteligência: usa ferramentas, passa no teste do espelho, pratica luto pelos mortos. Migra centenas de km lembrando rotas de gerações anteriores.',
-   facts:{'Peso':'3.500–6.000 kg','Longevidade':'~70 anos','Habitat':'África sub-saariana','Status':'Vulnerável'}},
+// Hominidae
+{id:'human',label:'Ser Humano',type:'species',clade:'primates',emoji:'🧑',scientific:'Homo sapiens',
+ desc:'Primata com maior encéfalo proporcional ao corpo. A única espécie com linguagem simbólica complexa, escrita e tecnologia cumulativa. 98,7% do DNA compartilhado com chimpanzés.',
+ facts:{'Peso':'50–80 kg','Longevidade':'~79 anos','Cérebro':'1.300 cm³','Status':'Pouco Preocupante'}},
+{id:'chimpanzee',label:'Chimpanzé',type:'species',clade:'primates',emoji:'🐒',scientific:'Pan troglodytes',
+ desc:'Parente mais próximo dos humanos (98,7% de DNA). Usa ferramentas, possui cultura transmitida entre gerações e demonstra empatia e autoconsciência.',
+ facts:{'Peso':'32–60 kg','Longevidade':'~45 anos','DNA humano':'98,7%','Status':'Ameaçado'}},
+{id:'bonobo',label:'Bonobo',type:'species',clade:'primates',emoji:'🐒',scientific:'Pan paniscus',
+ desc:'Irmão-gêmeo genético do chimpanzé mas com estrutura social matriarcal e pacífica. Usa comportamento sexual para resolver conflitos. Vive exclusivamente no Congo.',
+ facts:{'Peso':'27–45 kg','Longevidade':'~40 anos','Habitat':'Floresta do Congo','Status':'Ameaçado'}},
+{id:'gorilla',label:'Gorila-ocidental',type:'species',clade:'primates',emoji:'🦍',scientific:'Gorilla gorilla',
+ desc:'Maior primata vivo. Essencialmente herbívoro e pacífico. Liderado por costas-prateadas. Pode aprender centenas de sinais em linguagem de sinais.',
+ facts:{'Peso':'70–200 kg','Longevidade':'~40 anos','Habitat':'África Central-Oeste','Status':'Criticamente Ameaçado'}},
+{id:'orangutan',label:'Orangutango-de-bornéu',type:'species',clade:'primates',emoji:'🦧',scientific:'Pongo pygmaeus',
+ desc:'Maior mamífero arborícola. Amamentação mais longa dos primatas: até 8 anos. Constrói guarda-chuvas de folhas e usa ferramentas complexas.',
+ facts:{'Peso':'30–90 kg','Longevidade':'~45 anos','Habitat':'Bornéu','Status':'Criticamente Ameaçado'}},
 
-  {id:'manatee', label:'Peixe-boi', type:'species', clade:'afrotheria',
-   emoji:'🌊', scientific:'Trichechus manatus',
-   desc:'Parente dos elefantes, não dos peixes. Herbívoro aquático que renova molares de trás para frente ao longo da vida. Pode ficar até 20 min submerso. Inspirou lendas de sereias para marinheiros.',
-   facts:{'Peso':'400–600 kg','Longevidade':'~60 anos','Habitat':'Costas tropicais','Status':'Vulnerável'}},
+// Cercopithecidae
+{id:'baboon',label:'Babuíno-oliva',type:'species',clade:'primates',emoji:'🐒',scientific:'Papio anubis',
+ desc:'Primata terrestre altamente social com hierarquias complexas. Machos adultos possuem caninos maiores que os de um leão. Vive em tropas de até 150 indivíduos.',
+ facts:{'Peso':'15–37 kg','Longevidade':'~30 anos','Habitat':'Savanas africanas','Status':'Pouco Preocupante'}},
+{id:'macaque',label:'Macaco-rhesus',type:'species',clade:'primates',emoji:'🐒',scientific:'Macaca mulatta',
+ desc:'O primata não-humano mais estudado da medicina. Compartilha o fator Rh com humanos (daí o nome). Usado em pesquisas de vacinas, incluindo a poliomielite.',
+ facts:{'Peso':'5–11 kg','Longevidade':'~25 anos','Habitat':'Ásia','Status':'Pouco Preocupante'}},
+{id:'mandrill',label:'Mandril',type:'species',clade:'primates',emoji:'🐒',scientific:'Mandrillus sphinx',
+ desc:'O maior macaco do mundo. Rosto azul e vermelho do macho é sinal de dominância — mais intenso em machos dominantes. Vive em grupos de até 800 indivíduos (hordas).',
+ facts:{'Peso':'11–37 kg','Longevidade':'~20 anos','Habitat':'Floresta equatorial africana','Status':'Vulnerável'}},
 
-  {id:'aardvark', label:'Aardvark', type:'species', clade:'afrotheria',
-   emoji:'🐾', scientific:'Orycteropus afer',
-   desc:'Único membro da ordem Tubulidentata. Escava tocas enormes usadas por dezenas de outras espécies. Come até 50.000 formigas por noite com língua longa e pegajosa. Escuta perturbações subterrâneas com orelhas longas.',
-   facts:{'Peso':'40–65 kg','Longevidade':'~23 anos','Habitat':'África','Status':'Pouco Preocupante'}},
+// Platyrrhini
+{id:'spider_monkey',label:'Macaco-aranha',type:'species',clade:'primates',emoji:'🐒',scientific:'Ateles geoffroyi',
+ desc:'Cauda preênsil tão funcional quanto uma quinta mão. Braquiação — locomoção por balanço entre galhos — extremamente eficiente. Dispersor de sementes essencial.',
+ facts:{'Peso':'6–9 kg','Longevidade':'~25 anos','Habitat':'Florestas tropicais América Central','Status':'Em Perigo'}},
+{id:'marmoset',label:'Sagui-comum',type:'species',clade:'primates',emoji:'🐒',scientific:'Callithrix jacchus',
+ desc:'Um dos menores primatas. Nascimentos de gêmeos são a regra, não a exceção. Usa garras (não unhas) para escalar árvores. Nativo do Nordeste do Brasil.',
+ facts:{'Peso':'300–500 g','Longevidade':'~15 anos','Habitat':'Nordeste do Brasil','Status':'Pouco Preocupante'}},
+{id:'howler',label:'Bugio-ruivo',type:'species',clade:'primates',emoji:'🐒',scientific:'Alouatta guariba',
+ desc:'Urros ouvíveis a 5 km — som mais alto de qualquer mamífero terrestre das Américas. Osso hióide de câmara de ressonância amplifica o som.',
+ facts:{'Peso':'4–9 kg','Longevidade':'~20 anos','Habitat':'Mata Atlântica','Status':'Criticamente Ameaçado'}},
 
-  {id:'armadillo', label:'Tatu-gigante', type:'species', clade:'xenarthra',
-   emoji:'🛡️', scientific:'Priodontes maximus',
-   desc:'Maior tatu vivo. Couraça formada por placas ósseas (osteodermos). Suas tocas são usadas por ariranhas, raposas e cobras. Garras dianteiras são as mais longas entre mamíferos em proporção ao corpo.',
-   facts:{'Peso':'18–32 kg','Longevidade':'~12 anos','Habitat':'Am. do Sul','Status':'Vulnerável'}},
+// Strepsirrhini
+{id:'lemur',label:'Lêmure-de-cauda-anelada',type:'species',clade:'primates',emoji:'🦊',scientific:'Lemur catta',
+ desc:'Ícone de Madagascar. Termorregulação por "banho de sol" matinal. Comunicação por odor — marca território com glândulas aromáticas. Altamente social.',
+ facts:{'Peso':'2,2–3,5 kg','Longevidade':'~20 anos','Habitat':'Madagascar','Status':'Ameaçado'}},
+{id:'aye_aye',label:'Aye-aye',type:'species',clade:'primates',emoji:'🦊',scientific:'Daubentonia madagascariensis',
+ desc:'Terceiro dedo finíssimo para extrair larvas de madeira — nicho ecológico de pica-pau em mamífero. Considerado mau-agouro em Madagascar, o que leva à sua perseguição.',
+ facts:{'Peso':'2–3 kg','Longevidade':'~20 anos','Habitat':'Madagascar','Status':'Ameaçado'}},
 
-  {id:'sloth', label:'Preguiça-de-três-dedos', type:'species', clade:'xenarthra',
-   emoji:'🦥', scientific:'Bradypus tridactylus',
-   desc:'Mamífero mais lento do mundo — move-se a 0,24 km/h. Desce das árvores só uma vez por semana para defecar. Algas crescem em sua pelagem dando camuflagem verde. Passa 90% do tempo imóvel.',
-   facts:{'Peso':'3–4,5 kg','Longevidade':'~20 anos','Habitat':'Amazônia','Status':'Pouco Preocupante'}},
+// Muridae
+{id:'mouse',label:'Camundongo',type:'species',clade:'rodentia',emoji:'🐭',scientific:'Mus musculus',
+ desc:'Mamífero mais estudado da ciência. Compartilha ~85% dos genes com humanos. Fundamental para pesquisas médicas. Uma fêmea pode ter até 300 descendentes por ano.',
+ facts:{'Peso':'12–30 g','Longevidade':'~2 anos','Genes humanos':'~85%','Status':'Pouco Preocupante'}},
+{id:'rat',label:'Rato-marrom',type:'species',clade:'rodentia',emoji:'🐀',scientific:'Rattus norvegicus',
+ desc:'Colonizou todos os continentes com humanos. Inteligente, aprende rotas complexas. Ratos de laboratório salvaram incontáveis vidas na pesquisa médica.',
+ facts:{'Peso':'200–500 g','Longevidade':'~3 anos','Habitat':'Global (sinantrópico)','Status':'Pouco Preocupante'}},
+{id:'mole_rat',label:'Rato-toupeira-pelado',type:'species',clade:'rodentia',emoji:'🐭',scientific:'Heterocephalus glaber',
+ desc:'O único mamífero eusocial (como formigas), com castas rainha/obreiras. Praticamente não sente dor, não tem câncer e vive até 32 anos — recorde entre roedores.',
+ facts:{'Peso':'30–80 g','Longevidade':'~32 anos','Habitat':'África Oriental','Status':'Pouco Preocupante'}},
 
-  {id:'anteater', label:'Tamanduá-bandeira', type:'species', clade:'xenarthra',
-   emoji:'🐜', scientific:'Myrmecophaga tridactyla',
-   desc:'Come até 35.000 insetos/dia. Não tem dentes — usa o estômago musculoso com areia para triturar. Língua chega a 60 cm e entra/sai da boca 150 vezes por minuto. Temperatura corporal varia com o ambiente.',
-   facts:{'Peso':'25–40 kg','Longevidade':'~16 anos','Habitat':'Am. Central e Sul','Status':'Vulnerável'}},
+// Caviidae
+{id:'capybara',label:'Capivara',type:'species',clade:'rodentia',emoji:'🐾',scientific:'Hydrochoerus hydrochaeris',
+ desc:'Maior roedor vivo. Semiacuático e extremamente social. Convive pacificamente com jacarés, patos e macacos. Símbolo cultural brasileiro.',
+ facts:{'Peso':'35–66 kg','Longevidade':'~12 anos','Habitat':'Am. do Sul','Status':'Pouco Preocupante'}},
+{id:'guinea_pig',label:'Cobaia',type:'species',clade:'rodentia',emoji:'🐹',scientific:'Cavia porcellus',
+ desc:'Domesticada há ~7.000 anos pelos povos andinos como alimento. Não existe mais na natureza selvagem. Produziu "cobaias" para ciência — origem do termo.',
+ facts:{'Peso':'700–1.200 g','Longevidade':'~5 anos','Habitat':'Doméstico','Status':'Domesticado'}},
 
-  {id:'human', label:'Ser Humano', type:'species', clade:'primates',
-   emoji:'🧑', scientific:'Homo sapiens',
-   desc:'Primata com maior encéfalo proporcional. Compartilha 98,7% do DNA com chimpanzés. A única espécie com linguagem simbólica complexa, escrita, tecnologia cumulativa e autoconsciência filosófica documentada.',
-   facts:{'Peso':'50–80 kg','Longevidade':'~79 anos','Cérebro':'1.300 cm³','Status':'Pouco Preocupante'}},
+// Sciuridae
+{id:'squirrel',label:'Esquilo-vermelho',type:'species',clade:'rodentia',emoji:'🐿️',scientific:'Sciurus vulgaris',
+ desc:'Enterra sementes e nozes para o inverno, mas "esquece" muitas — tornando-se plantador involuntário de árvores. Memória espacial extraordinária.',
+ facts:{'Peso':'250–350 g','Longevidade':'~7 anos','Habitat':'Eurasia','Status':'Pouco Preocupante'}},
+{id:'marmot',label:'Marmota-alpina',type:'species',clade:'rodentia',emoji:'🐿️',scientific:'Marmota marmota',
+ desc:'Hibernação de até 8 meses. Na saída do inverno, toca estridente serve de alarme comunitário. Altamente social — vive em famílias com sentinelas.',
+ facts:{'Peso':'3–8 kg','Longevidade':'~15 anos','Habitat':'Alpes europeus','Status':'Pouco Preocupante'}},
+{id:'flying_squirrel',label:'Esquilo-voador',type:'species',clade:'rodentia',emoji:'🐿️',scientific:'Glaucomys volans',
+ desc:'Planador — não voa, mas plana até 80 m usando a membrana patagial entre patas. Noturno e fluorescente: brilha rosa sob luz UV por razão ainda desconhecida.',
+ facts:{'Peso':'45–85 g','Longevidade':'~5 anos','Habitat':'América do Norte','Status':'Pouco Preocupante'}},
 
-  {id:'chimpanzee', label:'Chimpanzé', type:'species', clade:'primates',
-   emoji:'🐒', scientific:'Pan troglodytes',
-   desc:'Parente mais próximo dos humanos (98,7% de DNA idêntico). Usa ferramentas, resolve problemas, possui cultura transmitida entre gerações e demonstra empatia. Possui 4 subespécies distintas.',
-   facts:{'Peso':'32–60 kg','Longevidade':'~45 anos','DNA humano':'98,7%','Status':'Ameaçado'}},
+// Castoridae
+{id:'beaver',label:'Castor-americano',type:'species',clade:'rodentia',emoji:'🦫',scientific:'Castor canadensis',
+ desc:'Engenheiro do ecossistema: represas criam wetlands que beneficiam centenas de espécies. Barragens podem ter décadas e alterar cursos de rios inteiros.',
+ facts:{'Peso':'16–32 kg','Longevidade':'~24 anos','Habitat':'América do Norte','Status':'Pouco Preocupante'}},
 
-  {id:'gorilla', label:'Gorila', type:'species', clade:'primates',
-   emoji:'🦍', scientific:'Gorilla gorilla',
-   desc:'Maior primata vivo. Apesar da aparência intimidadora, é essencialmente herbívoro. Vive em grupos liderados por macho costas-prateadas. Pode aprender linguagem de sinais em cativeiro.',
-   facts:{'Peso':'70–200 kg','Longevidade':'~40 anos','Habitat':'África Central','Status':'Criticamente Ameaçado'}},
+// Hystricidae
+{id:'porcupine',label:'Porco-espinho-africano',type:'species',clade:'rodentia',emoji:'🦔',scientific:'Hystrix cristata',
+ desc:'Espinhos ocos até 35 cm — o maior roedor da Europa e África. Espinhos se desprendem no predador como anzóis. Produz som de chocalho como aviso.',
+ facts:{'Peso':'13–27 kg','Longevidade':'~20 anos','Habitat':'África e S. Europa','Status':'Pouco Preocupante'}},
 
-  {id:'orangutan', label:'Orangutango', type:'species', clade:'primates',
-   emoji:'🦧', scientific:'Pongo pygmaeus',
-   desc:'Maior mamífero arborícola. Braços chegam a 2,4 m de envergadura. Amamentação mais longa dos primatas: até 8 anos. Constrói "guarda-chuvas" de folhas e usa ferramentas complexas de pedra e madeira.',
-   facts:{'Peso':'30–90 kg','Longevidade':'~45 anos','Habitat':'Bornéu e Sumatra','Status':'Criticamente Ameaçado'}},
+// Leporidae
+{id:'rabbit',label:'Coelho-europeu',type:'species',clade:'lagomorpha',emoji:'🐇',scientific:'Oryctolagus cuniculus',
+ desc:'Come suas próprias fezes cecais para reabsorver nutrientes. Visão quase 360°. Pode girar orelhas 270° independentemente para localizar sons.',
+ facts:{'Peso':'1,5–3 kg','Longevidade':'~12 anos','Habitat':'Global (introduzido)','Status':'Quase Ameaçado'}},
+{id:'hare',label:'Lebre-europeia',type:'species',clade:'lagomorpha',emoji:'🐇',scientific:'Lepus europaeus',
+ desc:'Cria no campo aberto (não em tocas como o coelho). Filhotes (lebrecos) nascem já com pelos e olhos abertos. Atinge 70 km/h em fuga.',
+ facts:{'Peso':'3–5,5 kg','Longevidade':'~12 anos','Habitat':'Europa e Ásia','Status':'Pouco Preocupante'}},
+{id:'pika',label:'Pika-americana',type:'species',clade:'lagomorpha',emoji:'🐹',scientific:'Ochotona princeps',
+ desc:'Sem cauda visível e orelhas redondas — parece um roedor mas é lagomorfa. Faz "feno": corta e seca plantas para estocar no inverno. Sentinela das mudanças climáticas.',
+ facts:{'Peso':'125–175 g','Longevidade':'~6 anos','Habitat':'Montanhas da Am. do Norte','Status':'Pouco Preocupante'}},
 
-  {id:'capybara', label:'Capivara', type:'species', clade:'rodentia',
-   emoji:'🐾', scientific:'Hydrochoerus hydrochaeris',
-   desc:'Maior roedor vivo. Semiacuático e extremamente social. Considerado o animal mais amigável do mundo por coexistir pacificamente com macacos, patos, jacarés e até onças. Símbolo cultural brasileiro.',
-   facts:{'Peso':'35–66 kg','Longevidade':'~12 anos','Habitat':'Am. do Sul','Status':'Pouco Preocupante'}},
+// Felidae
+{id:'lion',label:'Leão',type:'species',clade:'carnivora',emoji:'🦁',scientific:'Panthera leo',
+ desc:'Único felino social (vive em alcateias). Rugido audível a 8 km. Fêmeas realizam 90% das caças. Juba indica status e saúde.',
+ facts:{'Peso':'120–250 kg','Longevidade':'~16 anos','Habitat':'África e Índia','Status':'Vulnerável'}},
+{id:'tiger',label:'Tigre-de-bengala',type:'species',clade:'carnivora',emoji:'🐯',scientific:'Panthera tigris tigris',
+ desc:'Maior felino selvagem. Caçador solitário e crepuscular. Cada listrado é único como uma impressão digital. Excelente nadador — ao contrário da maioria dos gatos.',
+ facts:{'Peso':'140–300 kg','Longevidade':'~20 anos','Habitat':'Florestas da Índia','Status':'Ameaçado'}},
+{id:'jaguar',label:'Onça-pintada',type:'species',clade:'carnivora',emoji:'🐆',scientific:'Panthera onca',
+ desc:'Maior felino das Américas e 3º maior do mundo. Mordida mais forte entre felinos — perfura cascos de tartarugas. Boa nadadora, caça capivaras no Brasil.',
+ facts:{'Peso':'56–96 kg','Longevidade':'~12 anos','Habitat':'Amazônia e Pantanal','Status':'Quase Ameaçado'}},
+{id:'cheetah',label:'Guepardo',type:'species',clade:'carnivora',emoji:'🐆',scientific:'Acinonyx jubatus',
+ desc:'Animal terrestre mais rápido: 110 km/h em 3 segundos. Garras não-retráteis como "chuteiras". Após caçar, precisa descansar 30 min para baixar temperatura antes de comer.',
+ facts:{'Peso':'21–72 kg','Longevidade':'~12 anos','Vel. máx':'110 km/h','Status':'Vulnerável'}},
+{id:'leopard',label:'Leopardo',type:'species',clade:'carnivora',emoji:'🐆',scientific:'Panthera pardus',
+ desc:'O felino mais adaptável — vive da Sibéria à África Subsaariana. Sobe presas até 3× seu peso para cima das árvores. Capaz de existir perto de cidades.',
+ facts:{'Peso':'17–90 kg','Longevidade':'~23 anos','Habitat':'África e Ásia','Status':'Vulnerável'}},
+{id:'snow_leopard',label:'Leopardo-das-neves',type:'species',clade:'carnivora',emoji:'🐆',scientific:'Panthera uncia',
+ desc:'Fantasma das montanhas da Ásia Central. Cauda enorme (quase igual ao corpo) usada como cobertor no frio. Não ruge — vocaliza como um ronron amplificado.',
+ facts:{'Peso':'22–55 kg','Longevidade':'~20 anos','Habitat':'Himalaia e Ásia Central','Status':'Vulnerável'}},
 
-  {id:'beaver', label:'Castor', type:'species', clade:'rodentia',
-   emoji:'🦫', scientific:'Castor canadensis',
-   desc:'Engenheiro do ecossistema: suas represas criam wetlands que beneficiam centenas de espécies. Barragens podem durar décadas e alterar cursos de rios inteiros. Segundo maior roedor do mundo.',
-   facts:{'Peso':'16–32 kg','Longevidade':'~24 anos','Habitat':'América do Norte','Status':'Pouco Preocupante'}},
+// Canidae
+{id:'wolf',label:'Lobo-cinzento',type:'species',clade:'carnivora',emoji:'🐺',scientific:'Canis lupus',
+ desc:'Predador de topo que regula ecossistemas. Reintrodução em Yellowstone (1995) alterou cursos de rios por cascatas tróficas. Ancestral direto de todos os cães domésticos.',
+ facts:{'Peso':'20–70 kg','Longevidade':'~13 anos','Habitat':'Hemisfério Norte','Status':'Pouco Preocupante'}},
+{id:'fox',label:'Raposa-vermelha',type:'species',clade:'carnivora',emoji:'🦊',scientific:'Vulpes vulpes',
+ desc:'O carnívoro de distribuição geográfica mais ampla do mundo. Adapta-se de desertos a cidades. Usa campo magnético da Terra para calcular distância de salto na caça.',
+ facts:{'Peso':'2–14 kg','Longevidade':'~10 anos','Habitat':'Global','Status':'Pouco Preocupante'}},
+{id:'wild_dog',label:'Cão-selvagem-africano',type:'species',clade:'carnivora',emoji:'🐕',scientific:'Lycaon pictus',
+ desc:'Predador de maior taxa de sucesso na caça (~80%) — superando leões (~25%). Estrutura social altruísta: os doentes e machucados comem primeiro. Cada indivíduo tem padrão único de manchas.',
+ facts:{'Peso':'18–36 kg','Longevidade':'~11 anos','Habitat':'Savanas africanas','Status':'Ameaçado'}},
+{id:'maned_wolf',label:'Lobo-guará',type:'species',clade:'carnivora',emoji:'🦊',scientific:'Chrysocyon brachyurus',
+ desc:'Maior canídeo da América do Sul. Não é lobo nem raposa — gênero único. Dieta 50% frutos — especialmente a lobeira (Solanum lycocarpum). Patas longas para ver sobre o capim alto.',
+ facts:{'Peso':'20–30 kg','Longevidade':'~15 anos','Habitat':'Cerrado brasileiro','Status':'Quase Ameaçado'}},
 
-  {id:'mouse', label:'Camundongo', type:'species', clade:'rodentia',
-   emoji:'🐭', scientific:'Mus musculus',
-   desc:'Mamífero mais estudado da ciência. Compartilha ~85% dos genes com humanos. Fundamental para medicina, genética e neurociência. Uma única fêmea pode ter até 300 descendentes em um ano.',
-   facts:{'Peso':'12–30 g','Longevidade':'~2 anos','Genes humanos':'~85%','Status':'Pouco Preocupante'}},
+// Ursidae
+{id:'polar_bear',label:'Urso-polar',type:'species',clade:'carnivora',emoji:'🐻‍❄️',scientific:'Ursus maritimus',
+ desc:'Maior carnívoro terrestre. Pelos ocos e transparentes (não brancos). Nada por horas no Ártico. Faro detecta focas a 30 km. Metabolismo muda radicalmente no inverno.',
+ facts:{'Peso':'350–700 kg','Longevidade':'~25 anos','Habitat':'Ártico','Status':'Vulnerável'}},
+{id:'brown_bear',label:'Urso-pardo',type:'species',clade:'carnivora',emoji:'🐻',scientific:'Ursus arctos',
+ desc:'Maior carnívoro terrestre junto ao polar. Hiberna até 7 meses sem comer, beber ou defecar. Fêmeas parem durante a hibernação. Dieta 80% vegetal na maioria das populações.',
+ facts:{'Peso':'100–680 kg','Longevidade':'~30 anos','Habitat':'América do Norte, Europa, Ásia','Status':'Pouco Preocupante'}},
+{id:'panda',label:'Panda-gigante',type:'species',clade:'carnivora',emoji:'🐼',scientific:'Ailuropoda melanoleuca',
+ desc:'Carnívoro que come quase só bambu — 12–38 kg por dia. Tem um "sexto dedo" (osso radial sesamoide) que funciona como polegar para agarrar bambu. Ícone da conservação.',
+ facts:{'Peso':'70–130 kg','Longevidade':'~30 anos','Habitat':'Montanhas da China','Status':'Vulnerável'}},
 
-  {id:'rabbit', label:'Coelho', type:'species', clade:'lagomorpha',
-   emoji:'🐇', scientific:'Oryctolagus cuniculus',
-   desc:'Come suas próprias fezes cecais (cecotrofia) para reabsorver proteínas e vitaminas B. Visão de quase 360° para detectar predadores. Pode girar orelhas 270° independentemente para localizar sons.',
-   facts:{'Peso':'1,5–3 kg','Longevidade':'~12 anos','Habitat':'Global (introduzido)','Status':'Quase Ameaçado'}},
+// Mustelidae
+{id:'giant_otter',label:'Ariranha',type:'species',clade:'carnivora',emoji:'🦦',scientific:'Pteronura brasiliensis',
+ desc:'Maior mustelídeo do mundo. Voz com vocabulário de 9 sons distintos. Caça em grupo cooperativo e é chamada de "lobo-do-rio". Cada ariranha tem padrão único no pescoço.',
+ facts:{'Peso':'22–32 kg','Longevidade':'~12 anos','Habitat':'Amazônia e Pantanal','Status':'Ameaçado'}},
+{id:'honey_badger',label:'Texugo-do-mel',type:'species',clade:'carnivora',emoji:'🦡',scientific:'Mellivora capensis',
+ desc:'Considerado o animal mais corajoso do mundo pelo Guinness. Pele grossa e frouxa — pode girar dentro da própria pele para morder atacantes. Imune a veneno de cobra e picadas de abelha.',
+ facts:{'Peso':'7–16 kg','Longevidade':'~24 anos','Habitat':'África e Ásia','Status':'Pouco Preocupante'}},
 
-  {id:'lion', label:'Leão', type:'species', clade:'carnivora',
-   emoji:'🦁', scientific:'Panthera leo',
-   desc:'Único felino social, vivendo em alcateias. Rugido audível a 8 km. Fêmeas realizam 90% das caças. Único felino com dimorfismo sexual marcante — juba do macho indica saúde e dominância.',
-   facts:{'Peso':'120–250 kg','Longevidade':'~16 anos','Habitat':'África e Índia','Status':'Vulnerável'}},
+// Pinnipedia
+{id:'leopard_seal',label:'Foca-leopardo',type:'species',clade:'carnivora',emoji:'🦭',scientific:'Hydrurga leptonyx',
+ desc:'Apex predador do Antártico — única foca que caça outros mamíferos regularmente, incluindo pinguins e filhotes de foca. Segundo maior predador da Antártida.',
+ facts:{'Peso':'200–600 kg','Longevidade':'~26 anos','Habitat':'Antártida','Status':'Pouco Preocupante'}},
+{id:'sea_lion',label:'Leão-marinho-da-califórnia',type:'species',clade:'carnivora',emoji:'🦭',scientific:'Zalophus californianus',
+ desc:'Nada a 40 km/h e pode permanecer submerso por 10 min. Altamente inteligente — aprende acrobacias e pode entender linguagem de sinais simplificada.',
+ facts:{'Peso':'50–390 kg','Longevidade':'~25 anos','Habitat':'Costa do Pacífico','Status':'Pouco Preocupante'}},
+{id:'walrus',label:'Morsa',type:'species',clade:'carnivora',emoji:'🦭',scientific:'Odobenus rosmarus',
+ desc:'Presas de até 1 m usadas como âncoras para sair do gelo e para competição social. Possui 400–700 bigodes sensoriais (vibrissas). Descansa em grupos de milhares.',
+ facts:{'Peso':'600–1.700 kg','Longevidade':'~40 anos','Habitat':'Ártico','Status':'Vulnerável'}},
 
-  {id:'wolf', label:'Lobo-cinzento', type:'species', clade:'carnivora',
-   emoji:'🐺', scientific:'Canis lupus',
-   desc:'Predador de topo que regula ecossistemas. Reintrodução em Yellowstone (1995) alterou cursos dos rios por cascatas tróficas — os veados mudaram comportamento, vegetação recuperou margens fluviais.',
-   facts:{'Peso':'20–70 kg','Longevidade':'~13 anos','Habitat':'Hemisfério Norte','Status':'Pouco Preocupante'}},
+// ── CETARTIODACTYLA SPECIES ──
+// Mysticeti
+{id:'blue_whale',label:'Baleia-azul',type:'species',clade:'cetartiodactyla',emoji:'🐋',scientific:'Balaenoptera musculus',
+ desc:'O maior animal que já viveu na Terra — maior que qualquer dinossauro. Coração de ~180 kg bate 2–8 vezes/min. Filhotes ganham 90 kg/dia. Sons de até 188 dB.',
+ facts:{'Peso':'100.000–150.000 kg','Longevidade':'~90 anos','Comprimento':'até 33 m','Status':'Em Perigo'}},
+{id:'humpback',label:'Jubarte',type:'species',clade:'cetartiodactyla',emoji:'🐋',scientific:'Megaptera novaeangliae',
+ desc:'Conhecida pelos saltos acrobáticos e pelas canções complexas dos machos — que evoluem anualmente e se propagam pelo oceano como "hits musicais". Nadadeiras peitorais mais longas entre as baleias.',
+ facts:{'Peso':'25.000–40.000 kg','Longevidade':'~50 anos','Comprimento':'12–16 m','Status':'Pouco Preocupante'}},
+{id:'right_whale',label:'Baleia-franca-austral',type:'species',clade:'cetartiodactyla',emoji:'🐋',scientific:'Eubalaena australis',
+ desc:'Nome vem de ser a baleia "certa" para caçar — lenta, flutuava após morta. Barbatanas de até 3 m. Calosidades na cabeça (colônias de piolhos-de-baleia) são únicas a cada indivíduo.',
+ facts:{'Peso':'40.000–80.000 kg','Longevidade':'~70 anos','Comprimento':'13–17 m','Status':'Pouco Preocupante'}},
+{id:'minke',label:'Baleia-minke',type:'species',clade:'cetartiodactyla',emoji:'🐋',scientific:'Balaenoptera acutorostrata',
+ desc:'Menor das baleias de barbatanas (rorquais). A mais comum das baleias. Principal alvo da caça comercial moderna pela Noruega e Japão. Altamente curiosa com barcos.',
+ facts:{'Peso':'5.000–10.000 kg','Longevidade':'~50 anos','Comprimento':'7–10 m','Status':'Pouco Preocupante'}},
+{id:'bowhead',label:'Baleia-da-gronelândia',type:'species',clade:'cetartiodactyla',emoji:'🐋',scientific:'Balaena mysticetus',
+ desc:'O mamífero mais longevo — vivem mais de 200 anos. Pode quebrar gelo de 60 cm com a cabeça para respirar. Barbatanas de até 4 m — maiores do reino animal.',
+ facts:{'Peso':'75.000–100.000 kg','Longevidade':'200+ anos','Comprimento':'14–18 m','Status':'Pouco Preocupante'}},
+{id:'fin_whale',label:'Baleia-fin',type:'species',clade:'cetartiodactyla',emoji:'🐋',scientific:'Balaenoptera physalus',
+ desc:'Segundo maior animal do mundo. Assimétrica: lado direito da boca é branco, esquerdo escuro — usa para atordoar cardumes. Nada a 37 km/h, o segundo mais rápido.',
+ facts:{'Peso':'40.000–80.000 kg','Longevidade':'~90 anos','Comprimento':'18–27 m','Status':'Vulnerável'}},
 
-  {id:'polar_bear', label:'Urso-polar', type:'species', clade:'carnivora',
-   emoji:'🐻‍❄️', scientific:'Ursus maritimus',
-   desc:'Maior carnívoro terrestre. Pelos são ocos e transparentes (não brancos). Nada por horas no Ártico. Faro detecta focas a 30 km. Metabolismo muda radicalmente no inverno — quase hibernação sem entrar em torpor.',
-   facts:{'Peso':'350–700 kg','Longevidade':'~25 anos','Habitat':'Ártico','Status':'Vulnerável'}},
+// Odontoceti
+{id:'dolphin',label:'Golfinho-nariz-de-garrafa',type:'species',clade:'cetartiodactyla',emoji:'🐬',scientific:'Tursiops truncatus',
+ desc:'Autoconsciência confirmada (espelho). Usa esponjas como ferramenta. Dorme com metade do cérebro ativa. Possui nomes individuais — assobios únicos para cada indivíduo.',
+ facts:{'Peso':'150–650 kg','Longevidade':'~50 anos','Habitat':'Oceanos globais','Status':'Pouco Preocupante'}},
+{id:'orca',label:'Orca',type:'species',clade:'cetartiodactyla',emoji:'🐳',scientific:'Orcinus orca',
+ desc:'Maior dos golfinhos. Cultura única por população: dialetos, técnicas de caça e preferências transmitidas culturalmente. Inteligência comparável a grandes primatas.',
+ facts:{'Peso':'3.600–5.400 kg','Longevidade':'~80 anos','Habitat':'Oceanos globais','Status':'Dados Insuficientes'}},
+{id:'sperm_whale',label:'Cachalote',type:'species',clade:'cetartiodactyla',emoji:'🐳',scientific:'Physeter macrocephalus',
+ desc:'Maior animal dentado e maior encéfalo de qualquer ser vivo (~8 kg). Mergulha a 3.000 m por 90 min. Produz âmbar-gris no intestino — usado em perfumes de luxo.',
+ facts:{'Peso':'15.000–57.000 kg','Longevidade':'~70 anos','Mergulho':'3.000 m','Status':'Vulnerável'}},
+{id:'boto',label:'Boto-cor-de-rosa',type:'species',clade:'cetartiodactyla',emoji:'🐬',scientific:'Inia geoffrensis',
+ desc:'Golfinho de rio com cérebro 40% maior que o golfinho-comum proporcionalmente. Cor rosada por vasos sanguíneos superficiais. Pescoço flexível — pode girar 90°.',
+ facts:{'Peso':'85–185 kg','Longevidade':'~30 anos','Habitat':'Rios amazônicos','Status':'Em Perigo'}},
+{id:'narwhal',label:'Narval',type:'species',clade:'cetartiodactyla',emoji:'🦄',scientific:'Monodon monoceros',
+ desc:'"Unicórnio do mar" — o dente espiral é um canino modificado com até 3 m, com 10 milhões de terminações nervosas. Função ainda debatida: detecção ambiental? Comunicação?',
+ facts:{'Peso':'800–1.600 kg','Longevidade':'~50 anos','Habitat':'Ártico','Status':'Quase Ameaçado'}},
+{id:'beluga',label:'Beluga',type:'species',clade:'cetartiodactyla',emoji:'🐳',scientific:'Delphinapterus leucas',
+ desc:'"Canário do mar" — vocaliza mais de 50 sons distintos. Única baleia que pode girar a cabeça para os lados. Expressa emoções com a boca. Altamente sociável.',
+ facts:{'Peso':'400–1.500 kg','Longevidade':'~40 anos','Habitat':'Ártico e Sub-ártico','Status':'Pouco Preocupante'}},
 
-  {id:'orca', label:'Orca', type:'species', clade:'carnivora',
-   emoji:'🐳', scientific:'Orcinus orca',
-   desc:'Maior dos golfinhos, mas classificada em Carnivora. Possui cultura: populações diferentes têm dialetos únicos, técnicas de caça transmitidas culturalmente e preferências alimentares regionais. Quociente de inteligência altíssimo.',
-   facts:{'Peso':'3.600–5.400 kg','Longevidade':'~80 anos','Habitat':'Oceanos globais','Status':'Dados Insuficientes'}},
+// Bovidae
+{id:'cow',label:'Boi/Vaca',type:'species',clade:'cetartiodactyla',emoji:'🐄',scientific:'Bos taurus',
+ desc:'Domesticado há ~10.000 anos do uro selvagem (extinto em 1627). Estômago com 4 câmaras para digerir celulose. A maior população de mamíferos domésticos: ~1 bilhão no mundo.',
+ facts:{'Peso':'400–900 kg','Longevidade':'~20 anos','Domesticação':'~10.000 aC','Status':'Doméstico'}},
+{id:'bison',label:'Bisão-americano',type:'species',clade:'cetartiodactyla',emoji:'🦬',scientific:'Bison bison',
+ desc:'Símbolo dos Estados Unidos. Quase extinto na virada do século XIX (de 60 milhões para 300). Recuperação é uma das maiores histórias de conservação. Corre a 55 km/h.',
+ facts:{'Peso':'360–1.000 kg','Longevidade':'~25 anos','Habitat':'Planícies da Am. do Norte','Status':'Quase Ameaçado'}},
+{id:'gnu',label:'Gnu-azul',type:'species',clade:'cetartiodactyla',emoji:'🦬',scientific:'Connochaetes taurinus',
+ desc:'Protagonista da maior migração terrestre do mundo: 1,5 milhão de gnus percorrem anualmente 1.800 km no Serengeti. Filhotes ficam de pé em 10 minutos.',
+ facts:{'Peso':'118–270 kg','Longevidade':'~20 anos','Habitat':'Savanas africanas','Status':'Pouco Preocupante'}},
 
-  {id:'blue_whale', label:'Baleia-azul', type:'species', clade:'cetartiodactyla',
-   emoji:'🐋', scientific:'Balaenoptera musculus',
-   desc:'O maior animal que já viveu na Terra — maior que qualquer dinossauro. Coração de ~180 kg bate 2–8 vezes/min. Filhotes ganham 90 kg/dia. Emite sons de até 188 dB, audíveis a centenas de km.',
-   facts:{'Peso':'100.000–150.000 kg','Longevidade':'~90 anos','Habitat':'Oceanos globais','Status':'Em Perigo'}},
+// Giraffidae
+{id:'giraffe',label:'Girafa',type:'species',clade:'cetartiodactyla',emoji:'🦒',scientific:'Giraffa camelopardalis',
+ desc:'Mais alto animal do planeta (até 5,8 m). Mesmo número de vértebras cervicais que humanos (7), cada uma com ~28 cm. Coração de 11 kg. Dorme apenas 30 min/dia.',
+ facts:{'Peso':'750–1.750 kg','Longevidade':'~26 anos','Altura':'até 5,8 m','Status':'Vulnerável'}},
+{id:'okapi',label:'Okapi',type:'species',clade:'cetartiodactyla',emoji:'🦒',scientific:'Okapia johnstoni',
+ desc:'Parente mais próximo da girafa, apesar de parecer uma zebra. Descoberto pela ciência ocidental apenas em 1901. Língua de 45 cm alcança a própria orelha. Vive em florestas densas.',
+ facts:{'Peso':'200–350 kg','Longevidade':'~30 anos','Habitat':'Floresta do Congo','Status':'Em Perigo'}},
 
-  {id:'dolphin', label:'Golfinho-nariz-de-garrafa', type:'species', clade:'cetartiodactyla',
-   emoji:'🐬', scientific:'Tursiops truncatus',
-   desc:'Um dos animais mais inteligentes. Autoconsciência confirmada (espelho). Usa esponjas como ferramenta de caça. Dorme com metade do cérebro ativa. Possui nomes individuais — assobios únicos para cada indivíduo.',
-   facts:{'Peso':'150–650 kg','Longevidade':'~50 anos','Habitat':'Oceanos globais','Status':'Pouco Preocupante'}},
+// Hippopotamidae
+{id:'hippo',label:'Hipopótamo',type:'species',clade:'cetartiodactyla',emoji:'🦛',scientific:'Hippopotamus amphibius',
+ desc:'Parente mais próximo das baleias. Segrega protetor solar/antibiótico natural (vermelho-rosado). O mamífero terrestre mais perigoso da África.',
+ facts:{'Peso':'1.500–3.000 kg','Longevidade':'~40 anos','Habitat':'Rios africanos','Status':'Vulnerável'}},
+{id:'pygmy_hippo',label:'Hipopótamo-pigmeu',type:'species',clade:'cetartiodactyla',emoji:'🦛',scientific:'Choeropsis liberiensis',
+ desc:'Apenas ~1/10 do peso do hipopótamo comum. Mais terrestre e solitário. Florestas do Oeste Africano. Menos de 2.500 indivíduos restantes — criticamente ameaçado.',
+ facts:{'Peso':'160–275 kg','Longevidade':'~55 anos','Habitat':'África Ocidental','Status':'Em Perigo'}},
 
-  {id:'giraffe', label:'Girafa', type:'species', clade:'cetartiodactyla',
-   emoji:'🦒', scientific:'Giraffa camelopardalis',
-   desc:'Animal mais alto do planeta (até 5,8 m). Possui 7 vértebras cervicais como humanos, cada uma com ~28 cm. Coração de 11 kg bombeia sangue 2 m acima do coração. Dorme apenas 30 min por dia.',
-   facts:{'Peso':'750–1.750 kg','Longevidade':'~26 anos','Altura':'até 5,8 m','Status':'Vulnerável'}},
+// Suidae
+{id:'boar',label:'Javali-europeu',type:'species',clade:'cetartiodactyla',emoji:'🐗',scientific:'Sus scrofa',
+ desc:'Ancestral do porco doméstico. O mais invasivo dos mamíferos — introduzido em todos continentes exceto Antártida. Extremamente inteligente: usa ferramentas e resolve quebra-cabeças.',
+ facts:{'Peso':'50–200 kg','Longevidade':'~14 anos','Habitat':'Global (invasivo)','Status':'Pouco Preocupante'}},
+{id:'warthog',label:'Facóquero',type:'species',clade:'cetartiodactyla',emoji:'🐗',scientific:'Phacochoerus africanus',
+ desc:'Dorme e dá à luz em tocas. Entra de ré nas tocas para proteger-se com as presas. Tolerado por meerkat, mongoose e pássaros que o limpam de parasitas.',
+ facts:{'Peso':'45–150 kg','Longevidade':'~15 anos','Habitat':'Savanas africanas','Status':'Pouco Preocupante'}},
 
-  {id:'hippo', label:'Hipopótamo', type:'species', clade:'cetartiodactyla',
-   emoji:'🦛', scientific:'Hippopotamus amphibius',
-   desc:'Parente mais próximo das baleias. Segrega líquido vermelho-rosado com propriedades de protetor solar e antibiótico natural. Apesar da aparência, é o mamífero terrestre mais perigoso da África.',
-   facts:{'Peso':'1.500–3.000 kg','Longevidade':'~40 anos','Habitat':'África sub-saariana','Status':'Vulnerável'}},
+// Camelidae
+{id:'camel',label:'Camelo-dromedário',type:'species',clade:'cetartiodactyla',emoji:'🐪',scientific:'Camelus dromedarius',
+ desc:'Corcova armazena gordura (não água). Pode perder 40% do peso corporal em água sem morrer e reidratar 135 L em 13 minutos. Temperatura corporal varia de 34°C a 41°C.',
+ facts:{'Peso':'400–600 kg','Longevidade':'~50 anos','Habitat':'Desertos do Oriente Médio','Status':'Doméstico'}},
+{id:'llama',label:'Lhama',type:'species',clade:'cetartiodactyla',emoji:'🦙',scientific:'Lama glama',
+ desc:'Domesticada há ~6.000 anos pelos povos andinos como animal de carga e produtora de lã. Cospe quando irritada — mistura de ar e fluido estomacal. Anticorpos únicos (nanobodies) usados em pesquisa.',
+ facts:{'Peso':'130–200 kg','Longevidade':'~20 anos','Habitat':'Andes (domesticada)','Status':'Doméstico'}},
 
-  {id:'horse', label:'Cavalo', type:'species', clade:'perissodactyla',
-   emoji:'🐴', scientific:'Equus caballus',
-   desc:'Dominou o transporte e guerras por 5.000 anos. Dorme em pé por mecanismo de "bloqueio" nos joelhos. Maior globo ocular entre mamíferos terrestres. Velocidade máxima de 70 km/h.',
-   facts:{'Peso':'380–550 kg','Longevidade':'~25 anos','Vel. máx':'70 km/h','Status':'Doméstico'}},
+// Cervidae
+{id:'moose',label:'Alce',type:'species',clade:'cetartiodactyla',emoji:'🦌',scientific:'Alces alces',
+ desc:'Maior cervídeo vivo (até 2,1 m de altura). Palmetas de até 1,8 m de envergadura. Excelente nadador — mergulha até 5 m para se alimentar de plantas aquáticas.',
+ facts:{'Peso':'270–700 kg','Longevidade':'~25 anos','Habitat':'Florestas boreais','Status':'Pouco Preocupante'}},
+{id:'reindeer',label:'Rena',type:'species',clade:'cetartiodactyla',emoji:'🦌',scientific:'Rangifer tarandus',
+ desc:'Único cervídeo em que ambos os sexos têm chifres. Olhos mudam de cor no inverno (dourado→azul) para enxergar UV na neve. Migra até 5.000 km/ano.',
+ facts:{'Peso':'60–300 kg','Longevidade':'~15 anos','Habitat':'Tundra ártica','Status':'Vulnerável'}},
 
-  {id:'rhino', label:'Rinoceronte-branco', type:'species', clade:'perissodactyla',
-   emoji:'🦏', scientific:'Ceratotherium simum',
-   desc:'Segundo maior animal terrestre. "Chifre" feito de queratina compactada, não de osso. Excelente corredor para seu porte: 50 km/h. Pele de 5 cm de espessura protege contra espinhos e mordidas.',
-   facts:{'Peso':'1.400–3.600 kg','Longevidade':'~40 anos','Chifre':'Queratina','Status':'Quase Ameaçado'}},
+// Equidae
+{id:'horse',label:'Cavalo',type:'species',clade:'perissodactyla',emoji:'🐴',scientific:'Equus caballus',
+ desc:'Dominou transporte e guerras por 5.000 anos. Dorme em pé por mecanismo de bloqueio. Maior globo ocular entre mamíferos terrestres.',
+ facts:{'Peso':'380–550 kg','Longevidade':'~25 anos','Vel. máx':'70 km/h','Status':'Doméstico'}},
+{id:'zebra',label:'Zebra-das-planícies',type:'species',clade:'perissodactyla',emoji:'🦓',scientific:'Equus quagga',
+ desc:'Listras são únicas como impressão digital. A teoria mais aceita: confundem mosca tsé-tsé com objetos inanimados. Sociais e nunca dormem sem sentinela.',
+ facts:{'Peso':'175–385 kg','Longevidade':'~25 anos','Habitat':'Savanas africanas','Status':'Quase Ameaçado'}},
+{id:'tapir',label:'Anta-brasileira',type:'species',clade:'perissodactyla',emoji:'🐾',scientific:'Tapirus terrestris',
+ desc:'Parente de cavalos e rinocerontes. Focinho preênsil (probóscide curta) para alcançar galhos e frutas. Dispersora de sementes essencial para florestas. Nadam e mergulham bem.',
+ facts:{'Peso':'150–300 kg','Longevidade':'~30 anos','Habitat':'Am. do Sul','Status':'Vulnerável'}},
 
-  {id:'vampire_bat', label:'Morcego-vampiro', type:'species', clade:'chiroptera',
-   emoji:'🧛', scientific:'Desmodus rotundus',
-   desc:'Um dos poucos mamíferos hematófagos. Sensores IR no nariz detectam veias. Anticoagulante da saliva (draculin) é usado em medicina para tratar AVC. Compartilha sangue com companheiros de bando em jejum.',
-   facts:{'Peso':'25–40 g','Longevidade':'~9 anos','Habitat':'Américas tropicais','Status':'Pouco Preocupante'}},
+// Rhinocerotidae
+{id:'rhino',label:'Rinoceronte-branco',type:'species',clade:'perissodactyla',emoji:'🦏',scientific:'Ceratotherium simum',
+ desc:'Segundo maior animal terrestre. "Chifre" de queratina, não osso. Corre a 50 km/h. Comunicação por fezes e urina — uma toalete pode ser usada por 20 indivíduos.',
+ facts:{'Peso':'1.400–3.600 kg','Longevidade':'~40 anos','Chifre':'Queratina','Status':'Quase Ameaçado'}},
+{id:'sumatran_rhino',label:'Rinoceronte-de-sumatra',type:'species',clade:'perissodactyla',emoji:'🦏',scientific:'Dicerorhinus sumatrensis',
+ desc:'Menor e mais peludo rinoceronte — parente mais próximo dos extintos rinocerontes lanudos. Menos de 80 indivíduos restantes. Emite sons similares a baleias.',
+ facts:{'Peso':'500–1.000 kg','Longevidade':'~30 anos','Pop. restante':'<80','Status':'Criticamente Ameaçado'}},
 
-  {id:'fruit_bat', label:'Morcego-da-índia', type:'species', clade:'chiroptera',
-   emoji:'🦇', scientific:'Pteropus giganteus',
-   desc:'Maior morcego do mundo: envergadura de até 1,7 m. Essencial para polinização e dispersão de sementes em florestas tropicais. Ao contrário de outros morcegos, não usa ecolocação — navega pela visão e olfato.',
-   facts:{'Peso':'0,6–1,6 kg','Longevidade':'~31 anos','Envergadura':'até 1,7 m','Status':'Vulnerável'}},
+// Chiroptera species
+{id:'vampire_bat',label:'Morcego-vampiro',type:'species',clade:'chiroptera',emoji:'🧛',scientific:'Desmodus rotundus',
+ desc:'Um dos poucos mamíferos hematófagos. Sensores IR no nariz detectam veias. Draculin (anticoagulante) da saliva é usado em medicina contra AVC. Compartilha sangue com companheiros em jejum.',
+ facts:{'Peso':'25–40 g','Longevidade':'~9 anos','Habitat':'Américas tropicais','Status':'Pouco Preocupante'}},
+{id:'fruit_bat',label:'Raposa-voadora-indiana',type:'species',clade:'chiroptera',emoji:'🦇',scientific:'Pteropus giganteus',
+ desc:'Maior morcego do mundo: envergadura de até 1,7 m. Essencial para polinização e dispersão de sementes. Não usa ecolocação — navega pela visão e olfato.',
+ facts:{'Peso':'0,6–1,6 kg','Longevidade':'~31 anos','Envergadura':'até 1,7 m','Status':'Vulnerável'}},
+{id:'pipistrelle',label:'Morcego-anão-comum',type:'species',clade:'chiroptera',emoji:'🦇',scientific:'Pipistrellus pipistrellus',
+ desc:'Um dos menores morcegos europeus. Come até 3.000 mosquitos por noite. Ecolocação a 45 kHz. Hibernação em grupos de até 1.000 indivíduos.',
+ facts:{'Peso':'3–8 g','Longevidade':'~16 anos','Habitat':'Europa','Status':'Pouco Preocupante'}},
+{id:'long_nosed_bat',label:'Morcego-beija-flor',type:'species',clade:'chiroptera',emoji:'🦇',scientific:'Leptonycteris yerbabuenae',
+ desc:'Migrante que segue o florescimento de cactos e agaves pelo México e EUA. Principal polinizador do agave — sem ele, não há tequila. Língua de 76 mm.',
+ facts:{'Peso':'15–25 g','Longevidade':'~15 anos','Habitat':'Desertos da Am. do Norte','Status':'Quase Ameaçado'}},
 
-  {id:'hedgehog', label:'Ouriço-europeu', type:'species', clade:'eulipotyphla',
-   emoji:'🦔', scientific:'Erinaceus europaeus',
-   desc:'Coberto por ~5.000 espinhos ocos de queratina. Imunidade parcial a venenos de víbora. Hiberna no inverno. Pode percorrer 3 km por noite. Quando ameaçado, enrola-se em bola perfeita expondo apenas espinhos.',
-   facts:{'Peso':'600–1.100 g','Longevidade':'~10 anos','Espinhos':'~5.000','Status':'Pouco Preocupante'}},
-
-  {id:'mole', label:'Toupeira', type:'species', clade:'eulipotyphla',
-   emoji:'⛏️', scientific:'Talpa europaea',
-   desc:'Escava até 20 m de túneis por dia com patas dianteiras em forma de pá. Sangue com alta capacidade de ligar CO₂, permitindo viver em solos mal ventilados. "Vê" com receptores táteis no focinho (órgão de Eimer).',
-   facts:{'Peso':'70–130 g','Longevidade':'~3 anos','Túneis/dia':'até 20 m','Status':'Pouco Preocupante'}},
+// Eulipotyphla species
+{id:'hedgehog',label:'Ouriço-europeu',type:'species',clade:'eulipotyphla',emoji:'🦔',scientific:'Erinaceus europaeus',
+ desc:'~5.000 espinhos ocos de queratina. Imunidade parcial a venenos de víbora. Hiberna no inverno. Enrola-se em bola perfeita quando ameaçado.',
+ facts:{'Peso':'600–1.100 g','Longevidade':'~10 anos','Espinhos':'~5.000','Status':'Pouco Preocupante'}},
+{id:'mole',label:'Toupeira-europeia',type:'species',clade:'eulipotyphla',emoji:'⛏️',scientific:'Talpa europaea',
+ desc:'Escava até 20 m de túneis/dia. Sangue com alta capacidade de ligar CO₂ — vive em solos mal ventilados. Detecta presas com órgão de Eimer no focinho.',
+ facts:{'Peso':'70–130 g','Longevidade':'~3 anos','Túneis/dia':'até 20 m','Status':'Pouco Preocupante'}},
+{id:'star_nosed_mole',label:'Toupeira-nariz-estrela',type:'species',clade:'eulipotyphla',emoji:'⛏️',scientific:'Condylura cristata',
+ desc:'22 tentáculos nasais com 25.000 receptores sensoriais — o focinho mais sensível de qualquer mamífero. Identifica e come uma minhoca em 120 ms. Nada e caça debaixo do gelo.',
+ facts:{'Peso':'40–75 g','Longevidade':'~4 anos','Habitat':'Nordeste da Am. do Norte','Status':'Pouco Preocupante'}},
+{id:'shrew',label:'Musaranho-anão',type:'species',clade:'eulipotyphla',emoji:'🐀',scientific:'Sorex minutus',
+ desc:'Um dos menores mamíferos. Coração bate até 1.200 vezes/min. Come incessantemente — morre se ficar 2 horas sem comer. Alguns são venenosos por saliva.',
+ facts:{'Peso':'2–7 g','Longevidade':'~1 ano','Batimento':'1.200/min','Status':'Pouco Preocupante'}},
 ];
 
-const links = [
-  {source:'mammalia', target:'monotremata'}, {source:'mammalia', target:'theria'},
-  {source:'theria', target:'marsupialia'}, {source:'theria', target:'placentalia'},
-  {source:'placentalia', target:'afrotheria'}, {source:'placentalia', target:'xenarthra'},
-  {source:'placentalia', target:'boreoeutheria'},
-  {source:'boreoeutheria', target:'euarchontoglires'}, {source:'boreoeutheria', target:'laurasiatheria'},
-  {source:'euarchontoglires', target:'primates'}, {source:'euarchontoglires', target:'rodentia'},
-  {source:'euarchontoglires', target:'lagomorpha'},
-  {source:'laurasiatheria', target:'carnivora'}, {source:'laurasiatheria', target:'cetartiodactyla'},
-  {source:'laurasiatheria', target:'perissodactyla'}, {source:'laurasiatheria', target:'chiroptera'},
-  {source:'laurasiatheria', target:'eulipotyphla'},
-  {source:'monotremata', target:'platypus'}, {source:'monotremata', target:'echidna'},
-  {source:'marsupialia', target:'kangaroo'}, {source:'marsupialia', target:'koala'},
-  {source:'marsupialia', target:'tasmanian_devil'},
-  {source:'afrotheria', target:'elephant'}, {source:'afrotheria', target:'manatee'},
-  {source:'afrotheria', target:'aardvark'},
-  {source:'xenarthra', target:'armadillo'}, {source:'xenarthra', target:'sloth'},
-  {source:'xenarthra', target:'anteater'},
-  {source:'primates', target:'human'}, {source:'primates', target:'chimpanzee'},
-  {source:'primates', target:'gorilla'}, {source:'primates', target:'orangutan'},
-  {source:'rodentia', target:'capybara'}, {source:'rodentia', target:'beaver'},
-  {source:'rodentia', target:'mouse'},
-  {source:'lagomorpha', target:'rabbit'},
-  {source:'carnivora', target:'lion'}, {source:'carnivora', target:'wolf'},
-  {source:'carnivora', target:'polar_bear'}, {source:'carnivora', target:'orca'},
-  {source:'cetartiodactyla', target:'blue_whale'}, {source:'cetartiodactyla', target:'dolphin'},
-  {source:'cetartiodactyla', target:'giraffe'}, {source:'cetartiodactyla', target:'hippo'},
-  {source:'perissodactyla', target:'horse'}, {source:'perissodactyla', target:'rhino'},
-  {source:'chiroptera', target:'vampire_bat'}, {source:'chiroptera', target:'fruit_bat'},
-  {source:'eulipotyphla', target:'hedgehog'}, {source:'eulipotyphla', target:'mole'},
+// LINKS
+const links=[
+// ─ root
+{s:'mammalia',t:'monotremata'},{s:'mammalia',t:'theria'},
+{s:'theria',t:'marsupialia'},{s:'theria',t:'placentalia'},
+{s:'placentalia',t:'afrotheria'},{s:'placentalia',t:'xenarthra'},{s:'placentalia',t:'boreoeutheria'},
+{s:'boreoeutheria',t:'euarchontoglires'},{s:'boreoeutheria',t:'laurasiatheria'},
+{s:'euarchontoglires',t:'primates'},{s:'euarchontoglires',t:'rodentia'},{s:'euarchontoglires',t:'lagomorpha'},
+{s:'laurasiatheria',t:'carnivora'},{s:'laurasiatheria',t:'cetartiodactyla'},
+{s:'laurasiatheria',t:'perissodactyla'},{s:'laurasiatheria',t:'chiroptera'},{s:'laurasiatheria',t:'eulipotyphla'},
+// ─ clade → family
+{s:'cetartiodactyla',t:'mysticeti'},{s:'cetartiodactyla',t:'odontoceti'},
+{s:'cetartiodactyla',t:'bovidae_f'},{s:'cetartiodactyla',t:'giraffidae_f'},
+{s:'cetartiodactyla',t:'hippopotamidae_f'},{s:'cetartiodactyla',t:'suidae_f'},
+{s:'cetartiodactyla',t:'camelidae_f'},{s:'cetartiodactyla',t:'cervidae_f'},
+{s:'carnivora',t:'felidae_f'},{s:'carnivora',t:'canidae_f'},{s:'carnivora',t:'ursidae_f'},
+{s:'carnivora',t:'mustelidae_f'},{s:'carnivora',t:'pinnipedia_f'},
+{s:'primates',t:'hominidae_f'},{s:'primates',t:'cercopithecidae_f'},
+{s:'primates',t:'platyrrhini_f'},{s:'primates',t:'strepsirrhini_f'},
+{s:'rodentia',t:'muridae_f'},{s:'rodentia',t:'caviidae_f'},{s:'rodentia',t:'sciuridae_f'},
+{s:'rodentia',t:'castoridae_f'},{s:'rodentia',t:'hystricidae_f'},
+{s:'marsupialia',t:'macropodidae_f'},{s:'marsupialia',t:'dasyuridae_f'},
+{s:'perissodactyla',t:'equidae_f'},{s:'perissodactyla',t:'rhinocerotidae_f'},{s:'perissodactyla',t:'tapiridae_f'},
+{s:'chiroptera',t:'pteropodidae_f'},{s:'chiroptera',t:'phyllostomidae_f'},{s:'chiroptera',t:'vespertilionidae_f'},
+{s:'eulipotyphla',t:'erinaceidae_f'},{s:'eulipotyphla',t:'talpidae_f'},{s:'eulipotyphla',t:'soricidae_f'},
+{s:'afrotheria',t:'proboscidea_f'},{s:'afrotheria',t:'sirenia_f'},
+{s:'xenarthra',t:'dasypodidae_f'},{s:'xenarthra',t:'bradypodidae_f'},{s:'xenarthra',t:'myrmecophagidae_f'},
+{s:'lagomorpha',t:'leporidae_f'},
+// ─ family → species
+{s:'mysticeti',t:'blue_whale'},{s:'mysticeti',t:'humpback'},{s:'mysticeti',t:'right_whale'},
+{s:'mysticeti',t:'minke'},{s:'mysticeti',t:'bowhead'},{s:'mysticeti',t:'fin_whale'},
+{s:'odontoceti',t:'dolphin'},{s:'odontoceti',t:'orca'},{s:'odontoceti',t:'sperm_whale'},
+{s:'odontoceti',t:'boto'},{s:'odontoceti',t:'narwhal'},{s:'odontoceti',t:'beluga'},
+{s:'bovidae_f',t:'cow'},{s:'bovidae_f',t:'bison'},{s:'bovidae_f',t:'gnu'},
+{s:'giraffidae_f',t:'giraffe'},{s:'giraffidae_f',t:'okapi'},
+{s:'hippopotamidae_f',t:'hippo'},{s:'hippopotamidae_f',t:'pygmy_hippo'},
+{s:'suidae_f',t:'boar'},{s:'suidae_f',t:'warthog'},
+{s:'camelidae_f',t:'camel'},{s:'camelidae_f',t:'llama'},
+{s:'cervidae_f',t:'moose'},{s:'cervidae_f',t:'reindeer'},
+{s:'felidae_f',t:'lion'},{s:'felidae_f',t:'tiger'},{s:'felidae_f',t:'jaguar'},
+{s:'felidae_f',t:'cheetah'},{s:'felidae_f',t:'leopard'},{s:'felidae_f',t:'snow_leopard'},
+{s:'canidae_f',t:'wolf'},{s:'canidae_f',t:'fox'},{s:'canidae_f',t:'wild_dog'},{s:'canidae_f',t:'maned_wolf'},
+{s:'ursidae_f',t:'polar_bear'},{s:'ursidae_f',t:'brown_bear'},{s:'ursidae_f',t:'panda'},
+{s:'mustelidae_f',t:'giant_otter'},{s:'mustelidae_f',t:'honey_badger'},
+{s:'pinnipedia_f',t:'leopard_seal'},{s:'pinnipedia_f',t:'sea_lion'},{s:'pinnipedia_f',t:'walrus'},
+{s:'hominidae_f',t:'human'},{s:'hominidae_f',t:'chimpanzee'},{s:'hominidae_f',t:'bonobo'},
+{s:'hominidae_f',t:'gorilla'},{s:'hominidae_f',t:'orangutan'},
+{s:'cercopithecidae_f',t:'baboon'},{s:'cercopithecidae_f',t:'macaque'},{s:'cercopithecidae_f',t:'mandrill'},
+{s:'platyrrhini_f',t:'spider_monkey'},{s:'platyrrhini_f',t:'marmoset'},{s:'platyrrhini_f',t:'howler'},
+{s:'strepsirrhini_f',t:'lemur'},{s:'strepsirrhini_f',t:'aye_aye'},
+{s:'muridae_f',t:'mouse'},{s:'muridae_f',t:'rat'},{s:'muridae_f',t:'mole_rat'},
+{s:'caviidae_f',t:'capybara'},{s:'caviidae_f',t:'guinea_pig'},
+{s:'sciuridae_f',t:'squirrel'},{s:'sciuridae_f',t:'marmot'},{s:'sciuridae_f',t:'flying_squirrel'},
+{s:'castoridae_f',t:'beaver'},
+{s:'hystricidae_f',t:'porcupine'},
+{s:'macropodidae_f',t:'kangaroo'},{s:'macropodidae_f',t:'wallaby'},{s:'macropodidae_f',t:'quokka'},
+{s:'dasyuridae_f',t:'tasmanian_devil'},{s:'dasyuridae_f',t:'quoll'},
+{s:'equidae_f',t:'horse'},{s:'equidae_f',t:'zebra'},
+{s:'rhinocerotidae_f',t:'rhino'},{s:'rhinocerotidae_f',t:'sumatran_rhino'},
+{s:'tapiridae_f',t:'tapir'},
+{s:'pteropodidae_f',t:'fruit_bat'},
+{s:'phyllostomidae_f',t:'vampire_bat'},{s:'phyllostomidae_f',t:'long_nosed_bat'},
+{s:'vespertilionidae_f',t:'pipistrelle'},
+{s:'erinaceidae_f',t:'hedgehog'},
+{s:'talpidae_f',t:'mole'},{s:'talpidae_f',t:'star_nosed_mole'},
+{s:'soricidae_f',t:'shrew'},
+{s:'proboscidea_f',t:'elephant'},{s:'proboscidea_f',t:'forest_elephant'},{s:'proboscidea_f',t:'asian_elephant'},
+{s:'sirenia_f',t:'manatee'},{s:'sirenia_f',t:'dugong'},{s:'sirenia_f',t:'amazonian_manatee'},
+{s:'dasypodidae_f',t:'armadillo'},{s:'dasypodidae_f',t:'nine_banded'},
+{s:'bradypodidae_f',t:'sloth'},{s:'bradypodidae_f',t:'two_toed_sloth'},
+{s:'myrmecophagidae_f',t:'anteater'},{s:'myrmecophagidae_f',t:'tamandua'},
+{s:'leporidae_f',t:'rabbit'},{s:'leporidae_f',t:'hare'},{s:'leporidae_f',t:'pika'},
+// ─ direct clade → species (no family)
+{s:'monotremata',t:'platypus'},{s:'monotremata',t:'echidna'},{s:'monotremata',t:'longbeak_echidna'},
+{s:'marsupialia',t:'koala'},{s:'marsupialia',t:'opossum'},
+{s:'afrotheria',t:'aardvark'},{s:'afrotheria',t:'hyrax'},
+].map(l=>({source:l.s,target:l.t}));
+
+// LEGEND
+const legendClades=[
+  ['monotremata','Monotremata'],['marsupialia','Marsupialia'],
+  ['afrotheria','Afrotheria'],['xenarthra','Xenarthra'],
+  ['primates','Primates'],['rodentia','Rodentia'],['lagomorpha','Lagomorpha'],
+  ['carnivora','Carnivora'],['cetartiodactyla','Cetartiodactyla'],
+  ['perissodactyla','Perissodactyla'],['chiroptera','Chiroptera'],['eulipotyphla','Eulipotyphla'],
 ];
+const legend=document.getElementById('legend');
+legend.innerHTML='<div class="leg-title">Grupos</div>'+
+  legendClades.map(([k,l])=>`<div class="leg-item"><div class="leg-dot" style="background:${CC[k]};box-shadow:0 0 5px ${CC[k]}66"></div><span class="leg-label">${l}</span></div>`).join('');
 
-/* ===== LEGEND ===== */
-const legendClades = [
-  ['monotremata','Monotremata'], ['marsupialia','Marsupialia'],
-  ['afrotheria','Afrotheria'], ['xenarthra','Xenarthra'],
-  ['primates','Primates'], ['rodentia','Rodentia'],
-  ['carnivora','Carnivora'], ['cetartiodactyla','Cetartiodactyla'],
-  ['perissodactyla','Perissodactyla'], ['chiroptera','Chiroptera'],
-  ['eulipotyphla','Eulipotyphla'],
-];
-const legend = document.getElementById('legend');
-legend.innerHTML = '<div class="leg-title">Grupos</div>' +
-  legendClades.map(([k,l]) =>
-    `<div class="leg-item"><div class="leg-dot" style="background:${CC[k]};box-shadow:0 0 6px ${CC[k]}66"></div><span class="leg-label">${l}</span></div>`
-  ).join('');
-
-/* ===== D3 SETUP ===== */
-const W = window.innerWidth, H = window.innerHeight;
-const svg = d3.select('#graph').attr('width', W).attr('height', H);
-
-// Filters
-const defs = svg.append('defs');
-function makeGlow(id, color, blur=8, op=0.9) {
-  const f = defs.append('filter').attr('id', id).attr('x','-50%').attr('y','-50%').attr('width','200%').attr('height','200%');
-  f.append('feDropShadow').attr('dx',0).attr('dy',0).attr('stdDeviation',blur)
-   .attr('flood-color',color).attr('flood-opacity',op);
+// D3
+const W=window.innerWidth,H=window.innerHeight;
+const svg=d3.select('#graph').attr('width',W).attr('height',H);
+const defs=svg.append('defs');
+function makeGlow(id,color,blur=6,op=0.8){
+  const f=defs.append('filter').attr('id',id).attr('x','-50%').attr('y','-50%').attr('width','200%').attr('height','200%');
+  f.append('feDropShadow').attr('dx',0).attr('dy',0).attr('stdDeviation',blur).attr('flood-color',color).attr('flood-opacity',op);
 }
-makeGlow('glow-root','#FFD700',12);
-makeGlow('glow-cyan','#00d4ff',8);
-makeGlow('glow-select','#ffffff',14);
-Object.entries(CC).forEach(([k,v]) => makeGlow(`glow-${k}`,v,6,0.7));
+makeGlow('glow-root','#FFD700',14);
+Object.entries(CC).forEach(([k,v])=>makeGlow(`glow-${k}`,v,5,0.7));
 
-const g = svg.append('g');
+const g=svg.append('g');
+const zoom=d3.zoom().scaleExtent([0.08,5]).on('zoom',e=>g.attr('transform',e.transform));
+svg.call(zoom).on('dblclick.zoom',null);
 
-// Zoom
-const zoom = d3.zoom().scaleExtent([0.15,4]).on('zoom', e => g.attr('transform', e.transform));
-svg.call(zoom).on('dblclick.zoom', null);
+const nodeMap={};
+nodes.forEach(n=>nodeMap[n.id]=n);
+const isGroup=n=>n.type==='root'||n.type==='clade';
+const isFamily=n=>n.type==='family';
 
-/* ===== SIMULATION ===== */
-const nodeMap = {};
-nodes.forEach(n => nodeMap[n.id] = n);
+function nodeRadius(d){
+  if(d.type==='root') return 30;
+  if(d.type==='clade') return 20;
+  if(d.type==='family') return 13;
+  return 9;
+}
 
-const isClade = n => n.type === 'root' || n.type === 'clade';
-
-const sim = d3.forceSimulation(nodes)
-  .force('link', d3.forceLink(links).id(d=>d.id)
-    .distance(d => {
-      const s = nodeMap[d.source.id||d.source];
-      const t = nodeMap[d.target.id||d.target];
-      if(s.type==='root' || t.type==='root') return 140;
-      if(isClade(s) && isClade(t)) return 120;
-      if(isClade(s) || isClade(t)) return 80;
-      return 50;
+const sim=d3.forceSimulation(nodes)
+  .force('link',d3.forceLink(links).id(d=>d.id)
+    .distance(d=>{
+      const s=nodeMap[d.source.id||d.source],t=nodeMap[d.target.id||d.target];
+      if(s.type==='root'||t.type==='root') return 200;
+      if(isGroup(s)&&isGroup(t)) return 160;
+      if((isGroup(s)&&isFamily(t))||(isFamily(s)&&isGroup(t))) return 120;
+      if(isFamily(s)&&isFamily(t)) return 90;
+      if(isFamily(s)||isFamily(t)) return 75;
+      return 55;
     })
-    .strength(d => {
-      const s = nodeMap[d.source.id||d.source];
-      const t = nodeMap[d.target.id||d.target];
-      return isClade(s) && isClade(t) ? 0.8 : 0.5;
+    .strength(d=>{
+      const s=nodeMap[d.source.id||d.source],t=nodeMap[d.target.id||d.target];
+      if(isGroup(s)&&isGroup(t)) return 0.9;
+      if(isGroup(s)||isGroup(t)) return 0.7;
+      return 0.5;
     })
   )
-  .force('charge', d3.forceManyBody().strength(d => isClade(d) ? -600 : -200))
-  .force('center', d3.forceCenter(W/2, H/2).strength(0.05))
-  .force('collide', d3.forceCollide(d => nodeRadius(d) + 10))
-  .alphaDecay(0.025);
+  .force('charge',d3.forceManyBody().strength(d=>{
+    if(d.type==='root') return -1500;
+    if(d.type==='clade') return -800;
+    if(d.type==='family') return -350;
+    return -180;
+  }))
+  .force('center',d3.forceCenter(W/2,H/2).strength(0.04))
+  .force('collide',d3.forceCollide(d=>nodeRadius(d)+8))
+  .alphaDecay(0.02);
 
-function nodeRadius(d) {
-  if(d.type==='root') return 28;
-  if(d.type==='clade') return 18;
-  return 11;
-}
-
-/* ===== RENDER LINKS ===== */
-const linkG = g.append('g').attr('class','links');
-const linkEl = linkG.selectAll('line').data(links).enter().append('line')
-  .attr('stroke', d => {
-    const t = nodeMap[d.target.id||d.target];
-    return CC[t.clade] || '#ffffff';
-  })
-  .attr('stroke-opacity', 0.35)
-  .attr('stroke-width', d => {
-    const s = nodeMap[d.source.id||d.source];
-    const t = nodeMap[d.target.id||d.target];
-    return isClade(s) && isClade(t) ? 2 : 1;
+// LINKS
+const linkG=g.append('g');
+const linkEl=linkG.selectAll('line').data(links).enter().append('line')
+  .attr('stroke',d=>{const t=nodeMap[d.target.id||d.target];return CC[t.clade]||'#fff';})
+  .attr('stroke-opacity',0.3)
+  .attr('stroke-width',d=>{
+    const s=nodeMap[d.source.id||d.source],t=nodeMap[d.target.id||d.target];
+    if(isGroup(s)&&isGroup(t)) return 2.5;
+    if(isGroup(s)||isGroup(t)) return 1.5;
+    return 1;
   });
 
-/* ===== RENDER NODES ===== */
-const nodeG = g.append('g').attr('class','nodes');
-const nodeEl = nodeG.selectAll('g').data(nodes).enter().append('g')
-  .attr('class','node')
+// NODES
+const nodeG=g.append('g');
+const nodeEl=nodeG.selectAll('g').data(nodes).enter().append('g')
   .style('cursor','pointer')
   .call(d3.drag()
-    .on('start', (e,d) => { if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
-    .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
-    .on('end',   (e,d) => { if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+    .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;})
+    .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;})
   )
-  .on('click', (e,d) => { e.stopPropagation(); selectNode(d); })
-  .on('touchstart', (e,d) => { e.stopPropagation(); }, {passive:true});
+  .on('click',(e,d)=>{e.stopPropagation();selectNode(d);})
+  .on('touchstart',(e,d)=>{e.stopPropagation();},{passive:true});
 
-// Outer pulse ring (only clades)
-nodeEl.filter(d => isClade(d)).append('circle')
-  .attr('class','pulse-ring')
-  .attr('r', d => nodeRadius(d)+6)
-  .attr('fill','none')
-  .attr('stroke', d => CC[d.clade])
-  .attr('stroke-width', 1)
-  .attr('stroke-opacity', 0.3);
+// pulse rings (only group/clade nodes)
+nodeEl.filter(d=>isGroup(d)).append('circle')
+  .attr('class','pr').attr('r',d=>nodeRadius(d)+5)
+  .attr('fill','none').attr('stroke',d=>CC[d.clade]).attr('stroke-width',1).attr('stroke-opacity',0.25);
 
-// Main circle
+// main circle
 nodeEl.append('circle')
-  .attr('r', d => nodeRadius(d))
-  .attr('fill', d => d.type==='root' ? '#1a1500' : d.type==='clade' ? '#0a0a1e' : '#060618')
-  .attr('stroke', d => CC[d.clade] || '#ffffff')
-  .attr('stroke-width', d => d.type==='root' ? 3 : d.type==='clade' ? 2 : 1.5)
-  .attr('filter', d => `url(#glow-${d.clade})`);
+  .attr('r',d=>nodeRadius(d))
+  .attr('fill',d=>d.type==='root'?'#1a1500':d.type==='clade'?'#08081f':'#060616')
+  .attr('stroke',d=>CC[d.clade]||'#fff')
+  .attr('stroke-width',d=>d.type==='root'?3:d.type==='clade'?2:d.type==='family'?1.5:1.2)
+  .attr('stroke-dasharray',d=>d.type==='family'?'3 2':null)
+  .attr('filter',d=>`url(#glow-${d.clade})`);
 
-// Emoji label
+// emoji
 nodeEl.append('text')
   .attr('text-anchor','middle').attr('dominant-baseline','central')
-  .attr('font-size', d => d.type==='root' ? 16 : d.type==='clade' ? 13 : 9)
+  .attr('font-size',d=>d.type==='root'?16:d.type==='clade'?12:d.type==='family'?9:8)
   .attr('pointer-events','none')
-  .text(d => d.emoji);
+  .text(d=>d.emoji);
 
-// Name label
+// label
 nodeEl.append('text')
-  .attr('text-anchor','middle')
-  .attr('y', d => nodeRadius(d)+13)
-  .attr('font-size', d => d.type==='root' ? 11 : d.type==='clade' ? 10 : 8)
-  .attr('fill', d => CC[d.clade] || '#fff')
-  .attr('fill-opacity', 0.9)
+  .attr('text-anchor','middle').attr('y',d=>nodeRadius(d)+12)
+  .attr('font-size',d=>d.type==='root'?10:d.type==='clade'?9:d.type==='family'?8:7)
+  .attr('fill',d=>CC[d.clade]||'#fff').attr('fill-opacity',0.88)
   .attr('pointer-events','none')
-  .text(d => d.label);
+  .text(d=>d.label);
 
-// Selection ring
-nodeEl.append('circle')
-  .attr('class','select-ring')
-  .attr('r', d => nodeRadius(d)+8)
-  .attr('fill','none')
-  .attr('stroke','#ffffff')
-  .attr('stroke-width', 1.5)
-  .attr('stroke-dasharray','4 3')
-  .attr('opacity', 0);
+// selection ring
+nodeEl.append('circle').attr('class','sr')
+  .attr('r',d=>nodeRadius(d)+7).attr('fill','none')
+  .attr('stroke','#fff').attr('stroke-width',1.5)
+  .attr('stroke-dasharray','4 3').attr('opacity',0);
 
-/* ===== SIMULATION TICK ===== */
-sim.on('tick', () => {
-  linkEl
-    .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
-  nodeEl.attr('transform', d => `translate(${d.x},${d.y})`);
+sim.on('tick',()=>{
+  linkEl.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  nodeEl.attr('transform',d=>`translate(${d.x},${d.y})`);
 });
 
-/* ===== PULSE ANIMATION ===== */
-function animatePulse() {
-  d3.selectAll('.pulse-ring')
-    .transition().duration(2000).ease(d3.easeSinInOut)
-    .attr('stroke-opacity', 0.6).attr('r', function() {
-      return +d3.select(this.parentNode).datum().type === 'root'
-        ? nodeRadius(d3.select(this.parentNode).datum()) + 12
-        : nodeRadius(d3.select(this.parentNode).datum()) + 9;
-    })
-    .transition().duration(2000).ease(d3.easeSinInOut)
-    .attr('stroke-opacity', 0.15)
-    .attr('r', function() {
-      return nodeRadius(d3.select(this.parentNode).datum()) + 4;
-    })
-    .on('end', animatePulse);
+// pulse
+function pulse(){
+  d3.selectAll('.pr')
+    .transition().duration(2200).ease(d3.easeSinInOut)
+    .attr('stroke-opacity',0.55).attr('r',function(){return nodeRadius(d3.select(this.parentNode).datum())+10;})
+    .transition().duration(2200).ease(d3.easeSinInOut)
+    .attr('stroke-opacity',0.1).attr('r',function(){return nodeRadius(d3.select(this.parentNode).datum())+3;})
+    .on('end',pulse);
 }
-// Start pulse after simulation settles
-setTimeout(animatePulse, 2500);
+setTimeout(pulse,3000);
 
-/* ===== SELECTION ===== */
-let selected = null;
-function selectNode(d) {
-  // Deselect previous
-  d3.selectAll('.select-ring').attr('opacity', 0);
-  // Highlight selected
-  const el = nodeEl.filter(n => n.id === d.id);
-  el.select('.select-ring').attr('opacity', 1);
-  selected = d;
-  // Highlight connected links
+// SELECTION
+let sel=null;
+function selectNode(d){
+  d3.selectAll('.sr').attr('opacity',0);
+  nodeEl.filter(n=>n.id===d.id).select('.sr').attr('opacity',1);
+  sel=d;
   linkEl
-    .attr('stroke-opacity', l =>
-      (l.source.id===d.id||l.target.id===d.id) ? 0.9 : 0.1
-    )
-    .attr('stroke-width', l =>
-      (l.source.id===d.id||l.target.id===d.id) ? 3 : 1
-    );
-  // Dim unrelated nodes
-  nodeEl.attr('opacity', n => {
+    .attr('stroke-opacity',l=>(l.source.id===d.id||l.target.id===d.id)?0.92:0.06)
+    .attr('stroke-width',l=>(l.source.id===d.id||l.target.id===d.id)?3:1);
+  nodeEl.attr('opacity',n=>{
     if(n.id===d.id) return 1;
-    const linked = links.some(l =>
-      (l.source.id===d.id && l.target.id===n.id) ||
-      (l.target.id===d.id && l.source.id===n.id)
-    );
-    return linked ? 0.9 : 0.25;
+    return links.some(l=>(l.source.id===d.id&&l.target.id===n.id)||(l.target.id===d.id&&l.source.id===n.id))?0.9:0.2;
   });
-  // Show info panel
   showPanel(d);
 }
 
-svg.on('click', () => {
-  d3.selectAll('.select-ring').attr('opacity', 0);
-  linkEl.attr('stroke-opacity', 0.35).attr('stroke-width', d => {
-    const s = nodeMap[d.source.id||d.source];
-    const t = nodeMap[d.target.id||d.target];
-    return isClade(s) && isClade(t) ? 2 : 1;
+svg.on('click',()=>{
+  d3.selectAll('.sr').attr('opacity',0);
+  linkEl.attr('stroke-opacity',0.3).attr('stroke-width',d=>{
+    const s=nodeMap[d.source.id||d.source],t=nodeMap[d.target.id||d.target];
+    if(isGroup(s)&&isGroup(t)) return 2.5;
+    if(isGroup(s)||isGroup(t)) return 1.5;
+    return 1;
   });
-  nodeEl.attr('opacity', 1);
-  closePanel();
-  selected = null;
+  nodeEl.attr('opacity',1);
+  closePanel(); sel=null;
 });
 
-/* ===== INFO PANEL ===== */
-function showPanel(d) {
-  const color = CC[d.clade] || '#00d4ff';
-  const facts = Object.entries(d.facts||{}).map(([k,v]) =>
-    `<div class="fact"><div class="fact-k">${k}</div><div class="fact-v">${v}</div></div>`
-  ).join('');
-  document.getElementById('panelcontent').innerHTML = `
+// PANEL
+function showPanel(d){
+  const color=CC[d.clade]||'#00d4ff';
+  const badge={root:'Raiz',clade:'Ordem/Superordem',family:'Família',species:'Espécie'}[d.type]||d.type;
+  const facts=Object.entries(d.facts||{}).map(([k,v])=>`<div class="fact"><div class="fact-k">${k}</div><div class="fact-v">${v}</div></div>`).join('');
+  document.getElementById('pc').innerHTML=`
     <div class="p-emoji">${d.emoji}</div>
     <div class="p-name">${d.label}</div>
     <div class="p-sci">${d.scientific}</div>
-    <div class="p-badge" style="background:${color}22;border:1px solid ${color}44;color:${color}">${d.type==='species'?'Espécie':'Grupo'}</div>
+    <div class="p-badge" style="background:${color}22;border:1px solid ${color}44;color:${color}">${badge}</div>
     <div class="p-desc">${d.desc}</div>
-    ${facts ? `<div class="p-facts">${facts}</div>` : ''}
+    ${facts?`<div class="p-facts">${facts}</div>`:''}
   `;
   document.getElementById('panel').classList.add('open');
 }
-function closePanel() {
-  document.getElementById('panel').classList.remove('open');
-}
-document.getElementById('closebtn').addEventListener('click', e => {
-  e.stopPropagation();
-  closePanel();
-  d3.selectAll('.select-ring').attr('opacity', 0);
-  linkEl.attr('stroke-opacity', 0.35).attr('stroke-width', d => {
-    const s = nodeMap[d.source.id||d.source];
-    const t = nodeMap[d.target.id||d.target];
-    return isClade(s) && isClade(t) ? 2 : 1;
-  });
-  nodeEl.attr('opacity', 1);
-  selected = null;
+function closePanel(){document.getElementById('panel').classList.remove('open');}
+document.getElementById('closebtn').addEventListener('click',e=>{
+  e.stopPropagation(); closePanel();
+  d3.selectAll('.sr').attr('opacity',0);
+  linkEl.attr('stroke-opacity',0.3);
+  nodeEl.attr('opacity',1); sel=null;
+});
+document.getElementById('resetbtn').addEventListener('click',()=>{
+  svg.transition().duration(700).call(zoom.transform,d3.zoomIdentity);
 });
 
-/* ===== RESET ===== */
-document.getElementById('resetbtn').addEventListener('click', () => {
-  svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity);
-});
+// swipe to close
+let ty=0;
+document.getElementById('panel').addEventListener('touchstart',e=>{ty=e.touches[0].clientY;},{passive:true});
+document.getElementById('panel').addEventListener('touchmove',e=>{if(e.touches[0].clientY-ty>60)closePanel();},{passive:true});
 
-/* ===== SWIPE TO CLOSE PANEL ===== */
-let touchY = 0;
-document.getElementById('panel').addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, {passive:true});
-document.getElementById('panel').addEventListener('touchmove', e => {
-  if(e.touches[0].clientY - touchY > 60) closePanel();
-}, {passive:true});
-
-/* ===== RESIZE ===== */
-window.addEventListener('resize', () => {
-  const w = window.innerWidth, h = window.innerHeight;
+window.addEventListener('resize',()=>{
+  const w=window.innerWidth,h=window.innerHeight;
   svg.attr('width',w).attr('height',h);
-  sim.force('center', d3.forceCenter(w/2, h/2)).alpha(0.1).restart();
+  sim.force('center',d3.forceCenter(w/2,h/2)).alpha(0.1).restart();
 });
 </script>
 </body>
